@@ -74,6 +74,8 @@
   .bar{height:100%;background:var(--accent);border-radius:3px;transition:width .35s cubic-bezier(.2,.7,.3,1);}
   .bar.neg{background:var(--bad);margin-left:auto;}
   .row.zero .label,.row.zero .val{color:var(--faint);}
+  .row.cur{background:var(--accent-soft);}
+  .row.cur .label{font-weight:600;}
 
   .status{color:var(--muted);font-size:14px;padding:8px 10px;}
   .status.err{color:var(--warn);}
@@ -143,12 +145,12 @@
 
   <section class="panel">
     <div class="panelhead">
-      <h2>Сравнение направлений</h2>
+      <h2 id="ue-title">Сравнение направлений</h2>
       <div class="n" id="ue-caption"></div>
     </div>
     <div class="controls">
       <div class="ctl"><span class="cap">Месяц</span><div class="seg" id="ue-months" role="group" aria-label="Месяц"></div></div>
-      <div class="ctl"><span class="cap">Показатель</span><div class="seg" id="ue-metrics" role="group" aria-label="Показатель"></div></div>
+      <div class="ctl"><span class="cap">Направление</span><div class="seg" id="ue-channels" role="group" aria-label="Направление"></div></div>
     </div>
     <div class="rows" id="ue-rows"><div class="status">Загружаем юнит-экономику…</div></div>
     <div class="tablewrap"><table id="ue-table"></table></div>
@@ -410,7 +412,12 @@ var UE_METRICS = [
       return (r.revenue * r.margin - r.spend) / r.spend * 100; } }
 ];
 
-var uePeriods = [], ueCurPeriod = null, ueCurMetric = "spend";
+var uePeriods = [], ueCurPeriod = null;
+var ueChannels = [], ueCurChannel = "__all__";
+/* столбики всегда показывают выручку: «Все направления» — сравнение
+   направлений за месяц, конкретное направление — его динамику по месяцам.
+   Остальные показатели видны в таблице ниже. */
+var BAR = UE_METRICS.filter(function(m){ return m.key === "revenue"; })[0];
 
 function periodKey(r){ return r.year + "-" + r.mi; }
 function periodLabel(k){
@@ -419,11 +426,16 @@ function periodLabel(k){
 }
 
 function ueRender(){
-  var rows = UE.filter(function(r){ return periodKey(r) === ueCurPeriod; });
-  var metric = UE_METRICS.filter(function(m){ return m.key === ueCurMetric; })[0];
+  var one = ueCurChannel !== "__all__";
+  var rows = UE.filter(function(r){
+    return periodKey(r) === ueCurPeriod && (!one || r.channel === ueCurChannel);
+  });
   var p = ueCurPeriod.split("-");
   document.getElementById("ue-caption").textContent =
-    MONTHS[+p[1]] + " " + p[0] + " · " + rows.length + " направл.";
+    MONTHS[+p[1]] + " " + p[0] + " · " +
+    (one ? ueCurChannel : rows.length + " направл.");
+  document.getElementById("ue-title").textContent =
+    one ? "Выручка по месяцам" : "Сравнение направлений";
 
   // KPI-плитки — сводно за месяц
   var sum = function(f){
@@ -446,17 +458,27 @@ function ueRender(){
     kp.appendChild(d);
   });
 
-  // столбики по направлениям
-  var vals = rows.map(function(r){ return { name: r.channel, v: metric.get(r) }; });
+  // столбики: по направлениям за месяц либо по месяцам одного направления
+  var metric = BAR, vals;
+  if (one) {
+    vals = UE.filter(function(r){ return r.channel === ueCurChannel; })
+      .sort(function(a, b){ return (a.year - b.year) || (a.mi - b.mi); })
+      .map(function(r){
+        return { name: periodLabel(periodKey(r)), v: metric.get(r),
+                 cur: periodKey(r) === ueCurPeriod };
+      });
+  } else {
+    vals = rows.map(function(r){ return { name: r.channel, v: metric.get(r) }; })
+               .sort(function(a, b){ return (b.v || 0) - (a.v || 0); });
+  }
   var maxAbs = Math.max.apply(null, vals.map(function(d){
     return d.v == null ? 0 : Math.abs(d.v); })) || 1;
-  vals.sort(function(a, b){ return (b.v || 0) - (a.v || 0); });
 
   var host = document.getElementById("ue-rows");
   host.textContent = "";
   vals.forEach(function(d){
     var row = document.createElement("div");
-    row.className = "row" + (d.v ? "" : " zero");
+    row.className = "row" + (d.v ? "" : " zero") + (d.cur ? " cur" : "");
     row.tabIndex = 0;
     row.title = d.name + " — " + metric.label + ": " + metric.fmt(d.v);
     row.innerHTML = '<div class="rowtop"><span class="label"></span>' +
@@ -503,8 +525,8 @@ function ueRender(){
   Array.prototype.forEach.call(document.getElementById("ue-months").children, function(b){
     b.setAttribute("aria-pressed", String(b.dataset.k === ueCurPeriod));
   });
-  Array.prototype.forEach.call(document.getElementById("ue-metrics").children, function(b){
-    b.setAttribute("aria-pressed", String(b.dataset.k === ueCurMetric));
+  Array.prototype.forEach.call(document.getElementById("ue-channels").children, function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.k === ueCurChannel));
   });
 }
 
@@ -527,14 +549,27 @@ function ueBuildControls(){
     mh.appendChild(b);
   });
 
-  var mt = document.getElementById("ue-metrics");
-  mt.textContent = "";
-  UE_METRICS.forEach(function(m){
+  var seenCh = {};
+  UE.forEach(function(r){ seenCh[r.channel] = true; });
+  ueChannels = Object.keys(seenCh);
+
+  var ct = document.getElementById("ue-channels");
+  ct.textContent = "";
+  ["__all__"].concat(ueChannels).forEach(function(c){
     var b = document.createElement("button");
-    b.type = "button"; b.dataset.k = m.key;
-    b.textContent = m.label;
-    b.addEventListener("click", function(){ ueCurMetric = m.key; ueRender(); });
-    mt.appendChild(b);
+    b.type = "button"; b.dataset.k = c;
+    b.textContent = c === "__all__" ? "Все направления" : c;
+    b.addEventListener("click", function(){
+      ueCurChannel = c;
+      // в выбранном месяце может не быть этого направления — берём его последний
+      var av = UE.filter(function(r){ return c === "__all__" || r.channel === c; })
+                 .map(periodKey);
+      if (av.indexOf(ueCurPeriod) < 0 && av.length) {
+        ueCurPeriod = uePeriods.filter(function(k){ return av.indexOf(k) >= 0; }).pop();
+      }
+      ueRender();
+    });
+    ct.appendChild(b);
   });
 }
 
