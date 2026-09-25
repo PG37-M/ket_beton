@@ -183,20 +183,25 @@
               docs.google.com/spreadsheets/d/ЭТОТ_КУСОК/edit
    PANELS   — простые вкладки «подпись + числовые столбцы»
    UE_SHEETS — вкладки с юнит-экономикой (помесячные таблицы)
+
+   Вкладки задаются номером gid, а не названием: номер виден в адресе,
+   когда вкладка открыта (…/edit?gid=36356503), и не меняется при
+   переименовании вкладки.
+
    Таблица должна быть открыта по ссылке: Настройки доступа →
    «Все, у кого есть ссылка» → Читатель.
    ═════════════════════════════════════════════════════════════════ */
 var SHEET_ID = "1aJDjx6BNLMPFvP5IJg-1PEZixsugIyjItDz3cWABQC4";
 
 var PANELS = [
-  { sheet: "Причины",   suffix: "1", allLabel: "Все источники" },
-  { sheet: "Источники", suffix: "2", allLabel: "" }
+  { gid: "1459442722", suffix: "1", allLabel: "Все источники" },  // Причины
+  { gid: "410689789",  suffix: "2", allLabel: "" }                // Источники
 ];
 
 var UE_SHEETS = [
-  "Юнит-экономика Бетон",
-  "Юнит-экономика Инертные материалы",
-  "Юнит-экономика ЖБИ"
+  { gid: "36356503",   name: "Бетон" },
+  { gid: "1410855039", name: "Инертные материалы" },
+  { gid: "1527705359", name: "ЖБИ" }
 ];
 
 /* ── общие утилиты ───────────────────────────────────────────────── */
@@ -217,30 +222,66 @@ function pct(x){
   return (x > 0 ? "+" : "") + nf1(x) + "%";
 }
 
-/* Google отбивает пачку одновременных запросов -> "Failed to fetch".
-   Поэтому запросы идут по очереди, с одной повторной попыткой. */
-function gviz(sheet, retry){
-  return gvizOnce(sheet).catch(function(e){
+/* Лист читается как CSV: приходит ровно то, что видно в ячейках.
+   JSON-вариант навязывает колонке один тип, и текстовые шапки внутри
+   числовых столбцов терялись — из-за этого пропадали целые блоки.
+   Запросы идут по очереди, с одной повторной попыткой. */
+function gviz(gid, retry){
+  return gvizOnce(gid).catch(function(e){
     if (retry) throw e;
     return new Promise(function(res){ setTimeout(res, 800); }).then(function(){
-      return gviz(sheet, true);
+      return gviz(gid, true);
     });
   });
 }
 
-function gvizOnce(sheet){
+function gvizOnce(gid){
   return fetch("https://docs.google.com/spreadsheets/d/" + SHEET_ID +
-        "/gviz/tq?tqx=out:json&sheet=" + encodeURIComponent(sheet) +
-        "&headers=1&_=" + Date.now())
+        "/gviz/tq?tqx=out:csv&gid=" + encodeURIComponent(gid) +
+        "&headers=0&_=" + Date.now())
     .then(function(r){
       if (!r.ok) throw new Error("HTTP " + r.status);
       return r.text();
     })
     .then(function(txt){
-      var m = txt.match(/setResponse\(([\s\S]*)\);?\s*$/);
-      if (!m) throw new Error("неожиданный ответ таблицы");
-      return JSON.parse(m[1]).table;
+      if (/^\s*</.test(txt)) throw new Error("таблица не открыта по ссылке");
+      return parseCSV(txt);
     });
+}
+
+/* CSV -> массив строк, каждая строка — массив строковых ячеек */
+function parseCSV(s){
+  var rows = [], row = [], cell = "", q = false, i;
+  for (i = 0; i < s.length; i++){
+    var c = s[i];
+    if (q){
+      if (c === '"'){ if (s[i+1] === '"'){ cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === ","){ row.push(cell); cell = ""; }
+    else if (c === "\n"){ row.push(cell); rows.push(row); row = []; cell = ""; }
+    else if (c !== "\r") cell += c;
+  }
+  if (cell !== "" || row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+
+/* "р.14 746" -> 14746 · "18057,96" -> 18057.96 · "12%" -> 0.12
+   "#DIV/0!", "#REF!", пусто -> null */
+function toNum(v){
+  if (v == null) return null;
+  var t = String(v).replace(/ /g, " ").trim();
+  if (!t || t.charAt(0) === "#") return null;
+  var isPct = /%$/.test(t);
+  var neg = /^[^\d]*-/.test(t);             // минус до первой цифры
+  t = t.replace(/[^\d,.]/g, "")             // убираем р., ₽, пробелы, %, знак
+       .replace(/^\.+/, "");                // «р.14 746» -> «14746»
+  if (/,\d{1,2}$/.test(t)) t = t.replace(/\./g, "").replace(",", ".");
+  else t = t.replace(/,/g, "");
+  var n = parseFloat(t);
+  if (!isFinite(n)) return null;
+  if (neg) n = -n;
+  return isPct ? n / 100 : n;
 }
 
 /* ── панели «подпись + ряды» (причины, источники) ────────────────── */
@@ -297,18 +338,15 @@ function buildPanel(cfg){
     return keys[0];
   }
 
-  return gviz(cfg.sheet).then(function(t){
-    COLS = t.cols.slice(1).map(function(c, i){
-      return (c.label || "").trim() || ("Ряд " + (i + 1));
+  return gviz(cfg.gid).then(function(grid){
+    var head = grid[0] || [];
+    COLS = head.slice(1).map(function(c, i){
+      return String(c || "").trim() || ("Ряд " + (i + 1));
     });
-    DATA = t.rows.map(function(r){
-      var cells = r.c || [];
+    DATA = grid.slice(1).map(function(cells){
       return {
-        name: cells[0] && cells[0].v != null ? String(cells[0].v) : "",
-        values: COLS.map(function(_, i){
-          var c = cells[i + 1];
-          return c && typeof c.v === "number" ? c.v : 0;
-        })
+        name: String(cells[0] || "").trim(),
+        values: COLS.map(function(_, i){ return toNum(cells[i + 1]) || 0; })
       };
     }).filter(function(d){ return d.name; });
 
@@ -317,8 +355,8 @@ function buildPanel(cfg){
   }).catch(function(e){
     rowsEl.innerHTML = '<div class="status err"></div>';
     rowsEl.firstChild.textContent =
-      "Не удалось прочитать лист «" + cfg.sheet + "»: " + e.message +
-      ". Проверьте доступ к таблице по ссылке и название листа.";
+      "Не удалось прочитать вкладку gid=" + cfg.gid + ": " + e.message +
+      ". Проверьте доступ к таблице по ссылке и номер вкладки в блоке НАСТРОЙКА.";
   });
 }
 
@@ -328,7 +366,7 @@ var UE = [];   // {channel, year, month, mi, spend, leads, deals, revenue, margi
 function headerMap(cells){
   var map = {};
   cells.forEach(function(c, i){
-    var t = (c && c.v != null ? String(c.v) : "").trim().toLowerCase();
+    var t = String(c || "").trim().toLowerCase();
     if (!t) return;
     if (t.indexOf("затрат") === 0) map.spend = i;
     else if (t === "лиды") map.leads = i;
@@ -341,30 +379,24 @@ function headerMap(cells){
 }
 
 function num(cells, i){
-  if (i == null) return null;
-  var c = cells[i];
-  return c && typeof c.v === "number" ? c.v : null;
+  return i == null ? null : toNum(cells[i]);
 }
 
-function parseUE(sheetName, t){
-  var rows = t.rows || [];
-  var head = t.cols.map(function(c){ return { v: c.label }; });
+/* На листе может лежать несколько таблиц подряд: каждая начинается
+   строкой «Месяц | Затраты …». Блок с колонкой «Переходы» — это
+   Яндекс Директ, первый блок на листе Бетона — Авито. */
+function parseUE(baseName, grid){
   var blocks = [];
   var cur = null;
   var year = null;
-  var baseName = sheetName.replace(/^Юнит-экономика\s*/i, "").trim() || sheetName;
 
-  // первая строка листа уже стала заголовком колонок — учитываем её тоже
-  var all = [{ c: head }].concat(rows);
-
-  all.forEach(function(r){
-    var cells = r.c || [];
-    var first = cells[0] && cells[0].v != null ? String(cells[0].v).trim() : "";
+  grid.forEach(function(cells){
+    var first = String(cells[0] || "").trim();
 
     if (/^месяц$/i.test(first)) {                       // начало нового блока
       var map = headerMap(cells);
-      cur = { name: baseName + (map.clicks != null ? " · Контекст" : ""), map: map };
-      if (map.clicks != null && blocks.length) cur.name = baseName + " · Контекст";
+      cur = { name: baseName, map: map };
+      if (map.clicks != null) cur.name = baseName + " · Яндекс Директ";
       else if (blocks.length === 0 && /бетон/i.test(baseName)) cur.name = baseName + " · Авито";
       blocks.push(cur);
       return;
@@ -576,8 +608,8 @@ function ueBuildControls(){
 function loadUE(){
   UE_SHEETS.reduce(function(chain, s){
     return chain.then(function(){
-      return gviz(s).then(function(t){ parseUE(s, t); })
-                    .catch(function(e){ console.warn(s, e.message); });
+      return gviz(s.gid).then(function(grid){ parseUE(s.name, grid); })
+                        .catch(function(e){ console.warn(s.name, e.message); });
     });
   }, Promise.resolve()).then(function(){
     if (!UE.length) throw new Error("не найдено ни одной помесячной строки");
@@ -588,7 +620,7 @@ function loadUE(){
     host.innerHTML = '<div class="status err"></div>';
     host.firstChild.textContent =
       "Не удалось собрать юнит-экономику: " + e.message +
-      ". Проверьте доступ к таблице по ссылке и названия вкладок в блоке НАСТРОЙКА.";
+      ". Проверьте доступ к таблице по ссылке и номера вкладок в блоке НАСТРОЙКА.";
   });
 }
 
