@@ -1,575 +1,635 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Отчёт по лидам и юнит-экономике</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<style>
-  /* ── НАСТРОЙКА: id таблицы и номера вкладок — внизу файла, в <script> ── */
-
-  :root{
-    --ground:#f4f5f7; --surface:#fff; --line:#dfe3e8;
-    --ink:#161a1f; --muted:#5d6874; --faint:#8b95a1;
-    --accent:#2a6fd6; --accent-soft:#e1ecfb; --accent-2:#c7dcf6;
-    --warn:#b8571f; --good:#1d7a4c; --bad:#b8323c;
-    --serif:"Source Serif 4",Georgia,serif;
-    --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
-    color-scheme:light;
-  }
-  @media (prefers-color-scheme:dark){
-    :root:not([data-theme="light"]){
-      color-scheme:dark;
-      --ground:#14181d; --surface:#1b2027; --line:#2b323b;
-      --ink:#eef1f5; --muted:#9ba6b3; --faint:#78838f;
-      --accent:#5a9bf0; --accent-soft:#1e2b3c; --accent-2:#2c405a;
-      --warn:#e08a4e; --good:#57b98a; --bad:#e8737d;
-    }
-  }
-  :root[data-theme="dark"]{
-    color-scheme:dark;
-    --ground:#14181d; --surface:#1b2027; --line:#2b323b;
-    --ink:#eef1f5; --muted:#9ba6b3; --faint:#78838f;
-    --accent:#5a9bf0; --accent-soft:#1e2b3c; --accent-2:#2c405a;
-    --warn:#e08a4e; --good:#57b98a; --bad:#e8737d;
-  }
-  *{box-sizing:border-box;}
-  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;}
-  .wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:40px 56px;display:flex;flex-direction:column;gap:34px;}
-
-  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;}
-  h1{font-family:var(--serif);font-size:clamp(28px,5vw,40px);font-weight:600;line-height:1.15;margin:6px 0 8px;text-wrap:balance;letter-spacing:-.01em;}
-  .sub{color:var(--muted);max-width:62ch;margin:0;}
-  h2.sec{font-family:var(--serif);font-size:23px;font-weight:600;margin:0;letter-spacing:-.01em;}
-  .seclead{color:var(--muted);font-size:14px;margin:4px 0 0;}
-
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
-  .kpi{background:var(--surface);padding:16px 18px;}
-  .kpi b{display:block;font-family:var(--serif);font-size:30px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;}
-  .kpi span{display:block;font-size:12.5px;color:var(--muted);margin-top:4px;}
-
-  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 20px 14px;}
-  .panelhead{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;margin-bottom:18px;}
-  .panelhead h2{font-family:var(--serif);font-size:19px;font-weight:600;margin:0;}
-  .n{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums;}
-
-  .seg{display:inline-flex;background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;}
-  .seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--muted);padding:5px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;}
-  .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);}
-  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
-
-  .rows{display:flex;flex-direction:column;gap:2px;}
-  .row{display:flex;flex-direction:column;gap:4px;padding:9px 10px;border-radius:8px;transition:background .12s;}
-  .row:hover,.row:focus-visible{background:var(--accent-soft);outline:none;}
-  .rowtop{display:flex;justify-content:space-between;gap:12px;align-items:baseline;}
-  .label{font-size:14px;}
-  .val{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
-  .val strong{color:var(--ink);font-weight:600;}
-  .track{height:10px;background:var(--ground);border-radius:3px;overflow:hidden;}
-  .row:hover .track{background:var(--accent-2);}
-  .bar{height:100%;background:var(--accent);border-radius:3px;transition:width .35s cubic-bezier(.2,.7,.3,1);}
-  .row.zero .label,.row.zero .val{color:var(--faint);}
-
-  /* таблица юнит-экономики — как в Google Таблице */
-  .tablewrap{overflow-x:auto;margin:0 -20px;padding:0 20px;}
-  table.ue{border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;min-width:100%;}
-  table.ue th,table.ue td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line);}
-  table.ue th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;text-align:right;vertical-align:bottom;position:sticky;top:0;background:var(--surface);}
-  table.ue th:first-child,table.ue td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);}
-  table.ue tr:hover td{background:var(--accent-soft);}
-  table.ue tr.year td{font-weight:600;color:var(--muted);background:var(--ground);font-size:12px;letter-spacing:.04em;}
-  table.ue tr.year:hover td{background:var(--ground);}
-  table.ue td.na{color:var(--faint);}
-
-  /* графики */
-  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
-  .chart{background:var(--surface);padding:16px 18px 12px;}
-  .chart h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:0 0 2px;}
-  .chart .last{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums;}
-  .chart .lastcap{font-size:12px;color:var(--muted);margin-bottom:10px;}
-  .chart svg{display:block;width:100%;height:120px;overflow:visible;}
-  .chart .gl{stroke:var(--line);stroke-width:1;}
-  .chart .ln{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
-  .chart .ar{fill:var(--accent);opacity:.09;}
-  .chart .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2;}
-  .chart .hit{fill:transparent;cursor:pointer;}
-  .chart .xl{font-size:9.5px;fill:var(--faint);}
-  .tip{position:fixed;pointer-events:none;z-index:9;background:var(--ink);color:var(--ground);font-size:12px;padding:6px 9px;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity .1s;font-variant-numeric:tabular-nums;}
-
-  .status{color:var(--muted);font-size:14px;padding:8px 10px;}
-  .status.err{color:var(--warn);}
-
-  .note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;}
-  .note h3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
-  .note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;}
-  .lead{border-left:3px solid var(--warn);padding-left:14px;}
-  .lead p{margin:0;}
-  @media (prefers-reduced-motion:reduce){.bar{transition:none;}}
-</style>
 </head>
 <body>
+<title>Стяжка, штукатурка, полы</title>
+<meta name="description" content="Интерактивный отчёт по стяжке, штукатурке и промышленным полам — живые данные из Google Таблицы">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f3f4f2; --surface:#ffffff; --surface-2:#eceeeb; --line:#dcdfdb; --grid:#e7e9e6;
+  --ink:#16191c; --ink-2:#4d5358; --ink-3:#7d848a;
+  --accent:#2a78d6; --accent-ink:#1c5cab; --accent-soft:#e4eefb;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4;
+  --bad:#c93b3a; --good:#1a8a4e;
+  --shadow:0 1px 2px rgba(20,30,40,.06),0 4px 16px rgba(20,30,40,.04);
+  --f-body:"Onest",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --f-disp:"Unbounded","Onest",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#141618; --surface:#1c1f22; --surface-2:#25292d; --line:#30353a; --grid:#2a2e32;
+    --ink:#f1f3f4; --ink-2:#bcc2c7; --ink-3:#8c949b;
+    --accent:#3987e5; --accent-ink:#86b6ef; --accent-soft:#1d2d42;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+    --bad:#e66767; --good:#3dbb74;
+    --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#141618; --surface:#1c1f22; --surface-2:#25292d; --line:#30353a; --grid:#2a2e32;
+  --ink:#f1f3f4; --ink-2:#bcc2c7; --ink-3:#8c949b;
+  --accent:#3987e5; --accent-ink:#86b6ef; --accent-soft:#1d2d42;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181;
+  --bad:#e66767; --good:#3dbb74;
+  --shadow:none;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}
+header.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+h1{font-family:var(--f-disp);font-weight:600;font-size:clamp(22px,3.4vw,32px);line-height:1.15;margin:6px 0 0;text-wrap:balance;letter-spacing:-.01em}
+.status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex:none}
+.dot.live{background:var(--good)} .dot.err{background:var(--bad)}
+.btn{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent)} .btn:focus-visible,.tab:focus-visible,.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:var(--accent-ink)}
+nav.tabs{display:flex;gap:4px;margin-top:24px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tab{font:inherit;font-size:14px;font-weight:600;color:var(--ink-2);background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px 9px;cursor:pointer;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--ink)}
+section.panel{padding-top:24px;display:grid;gap:20px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:var(--shadow);min-width:0}
+.card h2{font-size:17px;font-weight:600;margin:0}
+.card h3{font-size:14px;font-weight:600;margin:0;color:var(--ink)}
+.sub{font-size:13px;color:var(--ink-3);margin:2px 0 0}
+.card-head{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:16px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.chart-box{position:relative;width:100%}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{font:inherit;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);padding:6px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+.seg button:hover{border-color:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .k{font-size:12px;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;font-weight:600}
+.kpi .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px;letter-spacing:-.01em}
+.kpi .n{font-size:12px;color:var(--ink-3)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--grid)}
+thead th{position:sticky;top:0;background:var(--surface-2);color:var(--ink-2);font-weight:600;font-size:12px;white-space:normal;vertical-align:bottom;min-width:92px;line-height:1.3}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);z-index:1;min-width:96px}
+thead th:first-child{background:var(--surface-2);z-index:2}
+tr.year td{background:var(--accent-soft);color:var(--accent-ink);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+tr.year td:first-child{background:var(--accent-soft)}
+tbody tr:not(.year):hover td{background:var(--surface-2)}
+td.na{color:var(--ink-3)} td.neg{color:var(--bad)}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+@media (max-width:760px){.charts{grid-template-columns:1fr}.wrap{padding-inline:16px}.card{padding:16px}}
+.chart-card .chart-box{height:240px;margin-top:12px}
+.last{font-size:13px;color:var(--ink-3);margin-top:2px;font-variant-numeric:tabular-nums}
+.last b{color:var(--ink);font-weight:600}
+.notice{border:1px solid var(--line);border-left:4px solid var(--bad);background:var(--surface);border-radius:10px;padding:14px 16px;font-size:14px}
+.notice.info{border-left-color:var(--accent)}
+.notice b{display:block;margin-bottom:2px}
+.skeleton{height:260px;border-radius:10px;background:linear-gradient(90deg,var(--surface-2),var(--grid),var(--surface-2));background-size:200% 100%;animation:sh 1.4s linear infinite}
+@keyframes sh{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.skeleton{animation:none}}
+.foot{margin-top:28px;font-size:12px;color:var(--ink-3)}
+</style>
+
 <div class="wrap">
-  <header>
-    <div class="eyebrow">Битрикс24 · MSG</div>
-    <h1>Отчёт по лидам и юнит-экономике</h1>
-    <p class="sub">Причины отказов за 01.07 — 31.08.2026 и помесячная юнит-экономика по стяжке/штукатурке и промышленным полам. Все цифры подтягиваются из Google Таблицы при каждом открытии страницы.</p>
+  <header class="top">
+    <div>
+      <div class="eyebrow">МСГ Бетон · отчёт</div>
+      <h1>Стяжка, штукатурка и промышленные полы</h1>
+    </div>
+    <div class="status" id="status">
+      <span class="dot" id="dot"></span><span id="statusText">Загружаю данные из Google Таблицы…</span>
+      <button class="btn" id="refresh" type="button">Обновить</button>
+    </div>
   </header>
 
-  <div class="kpis">
-    <div class="kpi"><b>315</b><span>сделок за период</span></div>
-    <div class="kpi"><b>60,3%</b><span>доля отказов</span></div>
-    <div class="kpi"><b>85,1%</b><span>потока — Авито</span></div>
-    <div class="kpi"><b>3,5%</b><span>успешных сделок</span></div>
-  </div>
+  <nav class="tabs" role="tablist" aria-label="Разделы отчёта">
+    <button class="tab" role="tab" id="t-reasons" data-tab="reasons" aria-selected="true">Причины отказов</button>
+    <button class="tab" role="tab" id="t-sources" data-tab="sources" aria-selected="false">Источники</button>
+    <button class="tab" role="tab" id="t-screed" data-tab="screed" aria-selected="false">Юнит-экономика: стяжка/штукатурка</button>
+    <button class="tab" role="tab" id="t-floors" data-tab="floors" aria-selected="false">Юнит-экономика: промышленные полы</button>
+  </nav>
 
-  <section class="panel">
-    <div class="panelhead">
-      <h2>Причины отказов</h2>
-      <div class="seg" id="seg-1" role="group" aria-label="Источник лида"></div>
-      <div class="n" id="total-1"></div>
+  <div id="pageNotice"></div>
+
+  <section class="panel" id="p-reasons" role="tabpanel" aria-labelledby="t-reasons">
+    <div class="card">
+      <div class="card-head">
+        <div><h2>Причины отказов</h2><p class="sub" id="reasonsSub">Количество отказов по причинам и каналам</p></div>
+        <div class="legend" id="reasonsLegend"></div>
+      </div>
+      <div class="chart-box" id="reasonsBox"><div class="skeleton"></div></div>
     </div>
-    <div class="rows" id="rows-1"><div class="status">Загружаем данные из таблицы…</div></div>
   </section>
 
-  <div class="lead">
-    <p><strong>Почти две трети отказов — это не отказ, а потеря контакта.</strong> «Нет обратной связи» — 118 сделок. Цена («нашли дешевле») объясняет лишь 10%, сроки — 5%. Проблема не в прайсе, а в том, что диалог обрывается.</p>
-  </div>
-
-  <section class="panel">
-    <div class="panelhead">
-      <h2>Сделки по источникам</h2>
-      <div class="seg" id="seg-2" role="group" aria-label="Стадия"></div>
-      <div class="n" id="total-2"></div>
+  <section class="panel" id="p-sources" role="tabpanel" aria-labelledby="t-sources" hidden>
+    <div class="card">
+      <div class="card-head">
+        <div><h2>Источники лидов</h2><p class="sub" id="sourcesSub">Стадия сделки: всего</p></div>
+      </div>
+      <div class="seg" id="stageSeg" role="group" aria-label="Стадия сделки"></div>
+      <div class="chart-box" id="sourcesBox" style="margin-top:16px"><div class="skeleton"></div></div>
     </div>
-    <div class="rows" id="rows-2"><div class="status">Загружаем данные из таблицы…</div></div>
   </section>
 
-  <section>
-    <h2 class="sec">Юнит-экономика: стяжка и штукатурка</h2>
-    <p class="seclead">Помесячно, в тех же графах, что и в Google Таблице.</p>
+  <section class="panel" id="p-screed" role="tabpanel" aria-labelledby="t-screed" hidden>
+    <div class="kpis" id="screedKpis"></div>
+    <div class="card">
+      <div class="card-head"><div><h2>Юнит-экономика: стяжка / штукатурка</h2><p class="sub">По месяцам, как в Google Таблице</p></div></div>
+      <div class="table-wrap" id="screedTable"><div class="skeleton"></div></div>
+    </div>
+    <div class="charts" id="screedCharts"></div>
   </section>
-  <section class="panel">
-    <div class="tablewrap"><table class="ue" id="tbl-a"></table></div>
-    <div class="status" id="st-a">Загружаем юнит-экономику…</div>
-  </section>
-  <div class="charts" id="ch-a"></div>
 
-  <section>
-    <h2 class="sec">Юнит-экономика: промышленные полы</h2>
-    <p class="seclead">Помесячно, в тех же графах, что и в Google Таблице.</p>
+  <section class="panel" id="p-floors" role="tabpanel" aria-labelledby="t-floors" hidden>
+    <div class="kpis" id="floorsKpis"></div>
+    <div class="card">
+      <div class="card-head"><div><h2>Юнит-экономика: промышленные полы</h2><p class="sub">По месяцам, как в Google Таблице</p></div></div>
+      <div class="table-wrap" id="floorsTable"><div class="skeleton"></div></div>
+    </div>
+    <div class="charts" id="floorsCharts"></div>
   </section>
-  <section class="panel">
-    <div class="tablewrap"><table class="ue" id="tbl-b"></table></div>
-    <div class="status" id="st-b">Загружаем юнит-экономику…</div>
-  </section>
-  <div class="charts" id="ch-b"></div>
 
-  <div class="note">
-    <h3>Оговорки к данным</h3>
-    <ul>
-      <li>Авито даёт 85% потока и 95% отказов — сравнивать структуру причин между каналами статистически некорректно, у «прочих» всего 9 отказов.</li>
-      <li>Формулировка «Нет обратной связи» не различает, кто прервал коммуникацию — клиент или менеджер.</li>
-      <li>24 сделки в стадии «Спам» не учитывались; у 1 отказной сделки причина не заполнена.</li>
-      <li>Прочерк в таблице — пустая ячейка или ошибка формулы в исходной таблице (#DIV/0!, #REF!). В графиках такие месяцы пропускаются.</li>
-      <li>Столбцы «Просмотры» и «Лиды» до 2026 года не заполнялись, поэтому динамика конверсии начинается с января 2026.</li>
-    </ul>
-  </div>
+  <p class="foot">Источник: <a href="https://docs.google.com/spreadsheets/d/1aJDjx6BNLMPFvP5IJg-1PEZixsugIyjItDz3cWABQC4/edit" target="_blank" rel="noopener">Google Таблица «Отчет по стяжке/штукатурке/промышленным полам»</a>. Страница перечитывает таблицу каждые 5 минут и по кнопке «Обновить».</p>
 </div>
-<div class="tip" id="tip"></div>
 
 <script>
-/* ═══ НАСТРОЙКА ══════════════════════════════════════════════════════
-   SHEET_ID — id из адреса таблицы:
-              docs.google.com/spreadsheets/d/ЭТОТ_КУСОК/edit
-   Вкладки задаются номером gid, а не названием: номер виден в адресе,
-   когда вкладка открыта (…/edit?gid=1225345247), и не меняется при
-   переименовании вкладки.
+(function(){
+"use strict";
+const SHEET_ID = "1aJDjx6BNLMPFvP5IJg-1PEZixsugIyjItDz3cWABQC4";
+const SERVER = "Google Drive", TOOL = "download_file_content";
+const XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const REFRESH_MS = 5 * 60 * 1000;
 
-   Таблица должна быть открыта по ссылке: Настройки доступа →
-   «Все, у кого есть ссылка» → Читатель.
-   ═════════════════════════════════════════════════════════════════ */
-var SHEET_ID = "1aJDjx6BNLMPFvP5IJg-1PEZixsugIyjItDz3cWABQC4";
+const $ = (id) => document.getElementById(id);
+const state = { model: null, stage: 1, charts: {}, tab: "reasons" };
 
-var PANELS = [
-  { gid: "1459442722", suffix: "1", allLabel: "Все источники" },  // Причины
-  { gid: "410689789",  suffix: "2", allLabel: "" }                // Источники
-];
-
-/* Вкладки юнит-экономики. Колонки берутся по буквам столбцов,
-   как они лежат на листе: A — месяц, B — затраты, … O — ROI. */
-var UE_SHEETS = [
-  { gid: "1225345247", table: "tbl-a", status: "st-a", charts: "ch-a" },  // стяжка/штукатурка
-  { gid: "82568387",   table: "tbl-b", status: "st-b", charts: "ch-b" }   // промышленные полы
-];
-
-/* Графики под таблицей: столбец листа + как подписывать значение. */
-var UE_CHARTS = [
-  { col: "G", title: "Конверсия просмотры/лиды", fmt: "pct" },
-  { col: "H", title: "Конверсия лид/сделка",     fmt: "pct" },
-  { col: "B", title: "Затраты на продвижение",   fmt: "money" },
-  { col: "D", title: "Лиды",                     fmt: "count" },
-  { col: "F", title: "Сделки",                   fmt: "count" },
-  { col: "I", title: "Выручка",                  fmt: "money" }
-];
-
-/* ── общие утилиты ───────────────────────────────────────────────── */
-var MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь",
-              "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
-
-function nf1(x){ return x.toFixed(1).replace(".", ","); }
-function money(x){
-  if (x == null || !isFinite(x)) return "—";
-  return Math.round(x).toLocaleString("ru-RU") + " ₽";
+/* ---------- tabs ---------- */
+const TABS = ["reasons","sources","screed","floors"];
+function showTab(name){
+  if(!TABS.includes(name)) name = "reasons";
+  state.tab = name;
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  TABS.forEach(t => { $("p-"+t).hidden = t !== name; });
+  try{ localStorage.setItem("beton-tab", name); }catch(e){}
+  if(state.model) renderTab(name);
 }
-function count(x){
-  if (x == null || !isFinite(x)) return "—";
-  return Math.round(x).toLocaleString("ru-RU");
-}
-function pct(x){   // доля 0..1 -> «8,7%»
-  if (x == null || !isFinite(x)) return "—";
-  return nf1(x * 100) + "%";
-}
-var FMT = { money: money, count: count, pct: pct };
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+let initial = (location.hash || "").slice(1);
+if(!TABS.includes(initial)){ try{ initial = localStorage.getItem("beton-tab") || "reasons"; }catch(e){ initial = "reasons"; } }
+showTab(initial);
 
-function colIndex(letter){ return letter.toUpperCase().charCodeAt(0) - 65; }
+/* ---------- theme tokens ---------- */
+function tok(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function onThemeChange(){ if(state.model) rerenderAll(); }
+try{ matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onThemeChange); }catch(e){}
+new MutationObserver(onThemeChange).observe(document.documentElement, {attributes:true, attributeFilter:["data-theme"]});
 
-/* Лист читается как CSV: приходит ровно то, что видно в ячейках.
-   JSON-вариант навязывает колонке один тип и стирает текст в числовых
-   столбцах. Запросы идут по очереди, с одной повторной попыткой. */
-function gviz(gid, retry){
-  return gvizOnce(gid).catch(function(e){
-    if (retry) throw e;
-    return new Promise(function(res){ setTimeout(res, 800); }).then(function(){
-      return gviz(gid, true);
-    });
-  });
+/* ---------- formatting ---------- */
+const nf0 = new Intl.NumberFormat("ru-RU", {maximumFractionDigits:0});
+const nf2 = new Intl.NumberFormat("ru-RU", {minimumFractionDigits:2, maximumFractionDigits:2});
+const rub = (v) => nf0.format(Math.round(v)) + " ₽";
+const pct = (v) => (Math.abs(v - Math.round(v)) < 1e-9 ? nf0.format(v) : nf2.format(v)) + "%";
+function parseNum(x){
+  if(typeof x === "number") return x;
+  if(typeof x !== "string") return null;
+  const s = x.replace(/\s| /g,"").replace(/[^\d,.\-]/g,"").replace(",",".");
+  if(!s || s === "-" || s === ".") return null;
+  const n = parseFloat(s); return isFinite(n) ? n : null;
 }
-
-function gvizOnce(gid){
-  return fetch("https://docs.google.com/spreadsheets/d/" + SHEET_ID +
-        "/gviz/tq?tqx=out:csv&gid=" + encodeURIComponent(gid) +
-        "&headers=0&_=" + Date.now())
-    .then(function(r){
-      if (!r.ok) throw new Error("HTTP " + r.status);
-      return r.text();
-    })
-    .then(function(txt){
-      if (/^\s*</.test(txt)) throw new Error("таблица не открыта по ссылке");
-      return parseCSV(txt);
-    });
+/* cell = {v, f, err} */
+function num(c){ if(!c || c.err) return null; const n = parseNum(c.v); return n; }
+function pctVal(c){
+  if(!c || c.err) return null;
+  if(typeof c.f === "string" && c.f.includes("%")) return parseNum(c.f);
+  const n = parseNum(c.v); if(n === null) return null;
+  return Math.abs(n) <= 1.5 ? n * 100 : n;
 }
-
-/* CSV -> массив строк, каждая строка — массив строковых ячеек */
-function parseCSV(s){
-  var rows = [], row = [], cell = "", q = false, i;
-  for (i = 0; i < s.length; i++){
-    var c = s[i];
-    if (q){
-      if (c === '"'){ if (s[i+1] === '"'){ cell += '"'; i++; } else q = false; }
-      else cell += c;
-    } else if (c === '"') q = true;
-    else if (c === ","){ row.push(cell); cell = ""; }
-    else if (c === "\n"){ row.push(cell); rows.push(row); row = []; cell = ""; }
-    else if (c !== "\r") cell += c;
+function colKind(h){
+  h = (h || "").toLowerCase();
+  if(/конверс|рентаб/.test(h)) return "pct";
+  if(/roi|рои/.test(h)) return "roi";
+  if(/затрат|выручк|стоимост|чек|прибыл|расход|бюджет/.test(h)) return "rub";
+  return "int";
+}
+function cellText(c, kind){
+  if(!c) return {t:"", cls:""};
+  if(c.err) return {t:"—", cls:"na", title:"Ошибка в таблице: " + (c.f || "#DIV/0!")};
+  if(c.v === null || c.v === "") return {t:"", cls:""};
+  if(kind === "pct"){ const p = pctVal(c); return p === null ? {t:String(c.f||c.v), cls:""} : {t:pct(p), cls:""}; }
+  const n = parseNum(c.v);
+  if(n === null) return {t:String(c.f || c.v), cls:""};
+  if(kind === "rub") return {t:rub(n), cls: n < 0 ? "neg" : ""};
+  if(kind === "roi"){
+    let t = (typeof c.f === "string" && c.f.trim()) ? c.f.trim() : nf2.format(n);
+    return {t, cls: n < 0 ? "neg" : ""};
   }
-  if (cell !== "" || row.length){ row.push(cell); rows.push(row); }
+  return {t: Number.isInteger(n) ? nf0.format(n) : nf2.format(n), cls:""};
+}
+function isEmptyRow(r){ return !r || r.every(c => !c || c.v === null || c.v === "" ); }
+function label(c){ return c && c.v !== null && c.v !== undefined ? String(c.f && typeof c.v !== "string" ? c.f : c.v).trim() : ""; }
+
+/* ---------- parsing: XLSX (connector) ---------- */
+function gridFromXlsx(ws){
+  if(!ws || !ws["!ref"]) return [];
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+  const rows = [];
+  for(let r = range.s.r; r <= range.e.r; r++){
+    const row = [];
+    for(let c = 0; c <= range.e.c; c++){
+      const cell = ws[XLSX.utils.encode_cell({r, c})];
+      if(!cell || cell.t === "z"){ row.push(null); continue; }
+      if(cell.t === "e"){ row.push({v:null, f:cell.w || "#ERR", err:true}); continue; }
+      row.push({v: cell.v, f: cell.w != null ? String(cell.w) : null});
+    }
+    rows.push(row);
+  }
   return rows;
 }
-
-/* "р.14 746" -> 14746 · "18057,96" -> 18057.96 · "12%" -> 0.12
-   "#DIV/0!", "#REF!", пусто -> null */
-function toNum(v){
-  if (v == null) return null;
-  var t = String(v).replace(/ /g, " ").trim();
-  if (!t || t.charAt(0) === "#") return null;
-  var isPct = /%$/.test(t);
-  var neg = /^[^\d]*-/.test(t);             // минус до первой цифры
-  t = t.replace(/[^\d,.]/g, "")             // убираем р., ₽, пробелы, %, знак
-       .replace(/^\.+/, "");                // «р.14 746» -> «14746»
-  if (/,\d{1,2}$/.test(t)) t = t.replace(/\./g, "").replace(",", ".");
-  else t = t.replace(/,/g, "");
-  var n = parseFloat(t);
-  if (!isFinite(n)) return null;
-  if (neg) n = -n;
-  return isPct ? n / 100 : n;
+function modelFromWorkbook(wb){
+  const names = wb.SheetNames;
+  const pick = (re, idx) => { const n = names.find(s => re.test(s.toLowerCase())) || names[idx]; return n ? gridFromXlsx(wb.Sheets[n]) : []; };
+  return buildModel({
+    reasons: pick(/отказ/, 0),
+    sources: pick(/источник/, 1),
+    screed:  pick(/стяжк|штукат/, 2),
+    floors:  pick(/пол/, 3)
+  });
 }
 
-/* Ячейка для таблицы: показываем то же, что в Google Таблице,
-   а ошибки формул и пустоту — прочерком. */
-function cellText(v){
-  var t = String(v == null ? "" : v).replace(/ /g, " ").trim();
-  return (!t || t.charAt(0) === "#") ? "—" : t;
+/* ---------- parsing: public-sheet fallback (outside claude.ai) ---------- */
+function gviz(sheetName){
+  return new Promise((resolve, reject) => {
+    const cb = "__gv" + Math.random().toString(36).slice(2);
+    const s = document.createElement("script");
+    const t = setTimeout(() => { cleanup(); reject(new Error("timeout")); }, 15000);
+    function cleanup(){ clearTimeout(t); delete window[cb]; s.remove(); }
+    window[cb] = (resp) => {
+      cleanup();
+      if(!resp || resp.status === "error") return reject(new Error("gviz"));
+      const rows = (resp.table.rows || []).map(r => (r.c || []).map(c => c ? {v: c.v === undefined ? null : c.v, f: c.f || null} : null));
+      const headers = (resp.table.cols || []).map(c => c.label);
+      if(headers.some(h => h)) rows.unshift(headers.map(h => h ? {v:h, f:null} : null));
+      resolve(rows);
+    };
+    s.src = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?headers=0&sheet=" + encodeURIComponent(sheetName) + "&tqx=responseHandler:" + cb;
+    s.onerror = () => { cleanup(); reject(new Error("network")); };
+    document.head.appendChild(s);
+  });
+}
+async function loadPublic(){
+  const [reasons, sources, screed, floors] = await Promise.all([
+    gviz("Причины отказов"), gviz("Источники"),
+    gviz("Юнит-экономика стяжка/штукатурка"), gviz("Юнит-экономика промышленные полы")
+  ]);
+  return buildModel({reasons, sources, screed, floors});
 }
 
-/* ── панели «подпись + ряды» (причины, источники) ────────────────── */
-function buildPanel(cfg){
-  var rowsEl  = document.getElementById("rows-"  + cfg.suffix),
-      totalEl = document.getElementById("total-" + cfg.suffix),
-      segEl   = document.getElementById("seg-"   + cfg.suffix);
-  var COLS = [], DATA = [];
+/* ---------- model ---------- */
+const MONTHS = {"январь":"Янв","февраль":"Фев","март":"Мар","апрель":"Апр","май":"Май","июнь":"Июн","июль":"Июл","август":"Авг","сентябрь":"Сен","октябрь":"Окт","ноябрь":"Ноя","декабрь":"Дек"};
+function buildCategory(grid){
+  const rows = grid.filter(r => !isEmptyRow(r));
+  if(!rows.length) return {series:[], items:[]};
+  const head = rows[0];
+  const series = [];
+  for(let i = 1; i < head.length; i++){ const h = label(head[i]); if(h) series.push({i, name:h}); }
+  const items = rows.slice(1).map(r => ({
+    name: label(r[0]),
+    values: series.map(s => num(r[s.i]) || 0)
+  })).filter(it => it.name);
+  return {series, items};
+}
+function buildUnit(grid){
+  const rows = grid.filter(r => !isEmptyRow(r));
+  if(!rows.length) return {headers:[], rows:[]};
+  const head = rows[0];
+  let lastCol = 0;
+  head.forEach((c, i) => { if(label(c)) lastCol = i; });
+  const headers = head.slice(0, lastCol + 1).map(label);
+  const out = []; let year = "";
+  rows.slice(1).forEach(r => {
+    const a = label(r[0]);
+    const ym = a.match(/(\d{4})/);
+    const restEmpty = r.slice(1, lastCol + 1).every(c => !c || c.v === null || c.v === "");
+    if(ym && restEmpty){ year = ym[1]; out.push({type:"year", label:a}); return; }
+    if(!a) return;
+    const short = (MONTHS[a.toLowerCase()] || a) + (year ? " " + year.slice(2) : "");
+    out.push({type:"month", label:a, short, year, cells: r.slice(0, lastCol + 1)});
+  });
+  return {headers, rows: out};
+}
+function buildModel(g){
+  return { reasons: buildCategory(g.reasons), sources: buildCategory(g.sources), screed: buildUnit(g.screed), floors: buildUnit(g.floors) };
+}
 
-  function render(src){
-    var vals = DATA.map(function(d){
-      return {
-        name: d.name,
-        v: src === "__all__"
-             ? d.values.reduce(function(a, b){ return a + b; }, 0)
-             : d.values[COLS.indexOf(src)]
-      };
-    }).sort(function(a, b){ return b.v - a.v; });
-
-    var sum = vals.reduce(function(s, d){ return s + d.v; }, 0);
-    var max = Math.max.apply(null, vals.map(function(d){ return d.v; })) || 1;
-    totalEl.textContent = "n = " + sum + " · " +
-      (src === "__all__" ? (cfg.allLabel || "всего") : src);
-
-    rowsEl.textContent = "";
-    vals.forEach(function(d){
-      var share = sum ? d.v / sum * 100 : 0;
-      var row = document.createElement("div");
-      row.className = "row" + (d.v === 0 ? " zero" : "");
-      row.tabIndex = 0;
-      row.title = d.name + " — " + d.v + " из " + sum + " (" + nf1(share) + "%)";
-      row.innerHTML = '<div class="rowtop"><span class="label"></span>' +
-        '<span class="val"><strong>' + d.v + '</strong> · ' + nf1(share) + '%</span></div>' +
-        '<div class="track"><div class="bar"></div></div>';
-      row.querySelector(".label").textContent = d.name;
-      row.querySelector(".bar").style.width = (d.v / max * 100) + "%";
-      rowsEl.appendChild(row);
+/* ---------- Chart.js helpers ---------- */
+function baseFont(){ return {family: tok("--f-body") || "system-ui", size: 12}; }
+function destroy(key){ if(state.charts[key]){ state.charts[key].destroy(); delete state.charts[key]; } }
+function ensureCanvas(boxId, h){
+  const box = $(boxId); box.innerHTML = ""; box.style.height = h + "px";
+  const cv = document.createElement("canvas"); box.appendChild(cv); return cv;
+}
+const endLabels = {
+  id: "endLabels",
+  afterDatasetsDraw(chart, args, opts){
+    if(!opts || !opts.enabled) return;
+    const {ctx} = chart; ctx.save();
+    ctx.font = "600 12px " + (tok("--f-body") || "system-ui");
+    ctx.fillStyle = opts.color; ctx.textBaseline = "middle";
+    const lastIdx = chart.data.datasets.length - 1;
+    const meta = chart.getDatasetMeta(lastIdx);
+    meta.data.forEach((bar, i) => {
+      const total = opts.totals ? opts.totals[i] : chart.data.datasets[lastIdx].data[i];
+      if(total === null || total === undefined) return;
+      ctx.textAlign = "left";
+      ctx.fillText(opts.fmt ? opts.fmt(total, i) : nf0.format(total), bar.x + 6, bar.y);
     });
-
-    Array.prototype.forEach.call(segEl.children, function(b){
-      b.setAttribute("aria-pressed", String(b.dataset.src === src));
-    });
+    ctx.restore();
   }
+};
+function tooltipStyle(){
+  return {
+    backgroundColor: tok("--surface"), titleColor: tok("--ink"), bodyColor: tok("--ink-2"),
+    borderColor: tok("--line"), borderWidth: 1, padding: 10, cornerRadius: 8,
+    titleFont: {...baseFont(), weight: "600", size: 13}, bodyFont: baseFont(), boxPadding: 4, usePointStyle: true
+  };
+}
 
-  function buildFilter(){
-    var keys = (cfg.allLabel ? ["__all__"] : []).concat(COLS);
-    segEl.textContent = "";
-    keys.forEach(function(c){
-      var b = document.createElement("button");
-      b.type = "button";
-      b.dataset.src = c;
-      b.textContent = c === "__all__" ? cfg.allLabel : c;
-      b.addEventListener("click", function(){ render(c); });
-      segEl.appendChild(b);
+/* ---------- Reasons ---------- */
+function renderReasons(){
+  const d = state.model.reasons;
+  destroy("reasons");
+  if(!d.items.length){ $("reasonsBox").innerHTML = '<div class="notice info">На листе «Причины отказов» нет данных.</div>'; return; }
+  const colors = ["--s1","--s2","--s3","--s4","--s5"].map(tok);
+  const items = d.items.map(it => ({...it, total: it.values.reduce((a,b) => a+b, 0)})).sort((a,b) => b.total - a.total);
+  const grand = items.reduce((a,it) => a + it.total, 0);
+  $("reasonsSub").textContent = "Всего отказов: " + nf0.format(grand) + ". Разбивка по каналам: " + d.series.map(s => s.name).join(", ").toLowerCase();
+  $("reasonsLegend").innerHTML = d.series.map((s,i) => `<span><i style="background:${colors[i % colors.length]}"></i>${esc(s.name)}</span>`).join("");
+  const cv = ensureCanvas("reasonsBox", Math.max(220, items.length * 44 + 40));
+  state.charts.reasons = new Chart(cv, {
+    type: "bar",
+    data: {
+      labels: items.map(it => it.name),
+      datasets: d.series.map((s, si) => ({
+        label: s.name, data: items.map(it => it.values[si]),
+        backgroundColor: colors[si % colors.length], borderColor: tok("--surface"), borderWidth: {right: 2},
+        borderRadius: si === d.series.length - 1 ? {topRight: 4, bottomRight: 4} : 0, borderSkipped: false,
+        barPercentage: .72, categoryPercentage: .9
+      }))
+    },
+    options: {
+      indexAxis: "y", maintainAspectRatio: false, animation: {duration: 300},
+      layout: {padding: {right: 48}},
+      scales: {
+        x: {stacked: true, beginAtZero: true, grid: {color: tok("--grid")}, border: {display:false}, ticks: {color: tok("--ink-3"), font: baseFont(), precision: 0}},
+        y: {stacked: true, grid: {display:false}, border: {color: tok("--line")}, ticks: {color: tok("--ink"), font: {...baseFont(), size: 13}}}
+      },
+      plugins: {
+        legend: {display: false},
+        tooltip: {...tooltipStyle(), mode: "index", intersect: false,
+          callbacks: { footer: (its) => "Итого: " + nf0.format(items[its[0].dataIndex].total) + " (" + nf2.format(items[its[0].dataIndex].total / (grand||1) * 100) + "% всех отказов)" },
+          footerColor: tok("--ink"), footerFont: {...baseFont(), weight: "600"}},
+        endLabels: {enabled: true, color: tok("--ink"), totals: items.map(it => it.total)}
+      }
+    },
+    plugins: [endLabels]
+  });
+}
+
+/* ---------- Sources ---------- */
+function renderStageSeg(){
+  const d = state.model.sources;
+  if(state.stage >= d.series.length) state.stage = 0;
+  $("stageSeg").innerHTML = d.series.map((s, i) => `<button type="button" id="stage-${i}" aria-pressed="${i === state.stage}" data-i="${i}">${esc(s.name)}</button>`).join("");
+  $("stageSeg").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { state.stage = +b.dataset.i; renderStageSeg(); renderSourcesChart(); }));
+}
+function renderSources(){
+  const d = state.model.sources;
+  if(!d.items.length){ destroy("sources"); $("sourcesBox").innerHTML = '<div class="notice info">На листе «Источники» нет данных.</div>'; $("stageSeg").innerHTML=""; return; }
+  // по умолчанию — «Всего», если такой столбец есть
+  if(state.stage === 1 && !state._stageInit){ const i = d.series.findIndex(s => /всего/i.test(s.name)); state.stage = i >= 0 ? i : 0; state._stageInit = true; }
+  renderStageSeg(); renderSourcesChart();
+}
+function renderSourcesChart(){
+  const d = state.model.sources; const si = state.stage; const stage = d.series[si];
+  destroy("sources");
+  const totalIdx = d.series.findIndex(s => /всего/i.test(s.name));
+  const items = d.items.map(it => ({name: it.name, v: it.values[si], all: totalIdx >= 0 ? it.values[totalIdx] : null})).sort((a,b) => b.v - a.v);
+  const sum = items.reduce((a, it) => a + it.v, 0);
+  $("sourcesSub").textContent = "Стадия сделки: " + stage.name.toLowerCase() + " · " + nf0.format(sum) + " лидов";
+  const cv = ensureCanvas("sourcesBox", Math.max(220, items.length * 36 + 40));
+  const color = tok("--accent");
+  state.charts.sources = new Chart(cv, {
+    type: "bar",
+    data: { labels: items.map(it => it.name), datasets: [{ label: stage.name, data: items.map(it => it.v), backgroundColor: color, borderRadius: {topRight:4, bottomRight:4}, borderSkipped: false, barPercentage: .7, categoryPercentage: .9, minBarLength: 0 }] },
+    options: {
+      indexAxis: "y", maintainAspectRatio: false, animation: {duration: 300},
+      layout: {padding: {right: 72}},
+      scales: {
+        x: {beginAtZero: true, grid: {color: tok("--grid")}, border: {display:false}, ticks: {color: tok("--ink-3"), font: baseFont(), precision: 0}},
+        y: {grid: {display:false}, border: {color: tok("--line")}, ticks: {color: tok("--ink"), font: {...baseFont(), size: 13}}}
+      },
+      plugins: {
+        legend: {display:false},
+        tooltip: {...tooltipStyle(), callbacks: {
+          label: (c) => " " + stage.name + ": " + nf0.format(c.raw),
+          afterLabel: (c) => { const it = items[c.dataIndex]; const out = [];
+            if(sum) out.push("Доля в стадии: " + nf2.format(it.v / sum * 100) + "%");
+            if(it.all && si !== totalIdx) out.push("От всех лидов источника: " + nf2.format(it.v / it.all * 100) + "% (" + nf0.format(it.v) + " из " + nf0.format(it.all) + ")");
+            return out; } }},
+        endLabels: {enabled: true, color: tok("--ink"), fmt: (v) => nf0.format(v) + (sum && v ? "  ·  " + nf0.format(v / sum * 100) + "%" : "")}
+      }
+    },
+    plugins: [endLabels]
+  });
+}
+
+/* ---------- Unit economics ---------- */
+const UNIT_CHARTS = [
+  {col: 6, title: "Конверсия просмотры → лиды", kind: "pct", type: "line"},
+  {col: 7, title: "Конверсия лид → сделка", kind: "pct", type: "line"},
+  {col: 1, title: "Затраты на продвижение", kind: "rub", type: "bar"},
+  {col: 3, title: "Лиды", kind: "int", type: "bar"},
+  {col: 5, title: "Сделки", kind: "int", type: "bar"},
+  {col: 8, title: "Выручка", kind: "rub", type: "bar"}
+];
+function fmtKind(v, kind){ if(v === null || v === undefined) return "нет данных"; return kind === "pct" ? pct(v) : kind === "rub" ? rub(v) : nf0.format(v); }
+function renderUnit(key){
+  const d = state.model[key];
+  const tableEl = $(key + "Table"), kpiEl = $(key + "Kpis"), chartsEl = $(key + "Charts");
+  UNIT_CHARTS.forEach((_, i) => destroy(key + i));
+  if(!d.headers.length){ tableEl.innerHTML = '<div class="notice info" style="border:0">Лист пуст.</div>'; kpiEl.innerHTML = ""; chartsEl.innerHTML = ""; return; }
+  const kinds = d.headers.map(colKind);
+  // table
+  let html = "<table><thead><tr>" + d.headers.map(h => `<th scope="col">${esc(h)}</th>`).join("") + "</tr></thead><tbody>";
+  d.rows.forEach(r => {
+    if(r.type === "year"){ html += `<tr class="year"><td colspan="${d.headers.length}">${esc(r.label)}</td></tr>`; return; }
+    html += "<tr>" + d.headers.map((h, i) => {
+      if(i === 0) return `<td>${esc(r.label)}</td>`;
+      const t = cellText(r.cells[i], kinds[i]);
+      return `<td class="${t.cls}"${t.title ? ` title="${esc(t.title)}"` : ""}>${esc(t.t)}</td>`;
+    }).join("") + "</tr>";
+  });
+  tableEl.innerHTML = html + "</tbody></table>";
+  const months = d.rows.filter(r => r.type === "month");
+  // KPIs (sums over the period)
+  const sumCol = (i) => months.reduce((a, r) => { const n = num(r.cells[i]); return a + (n || 0); }, 0);
+  const costs = sumCol(1), leads = sumCol(3), deals = sumCol(5), rev = sumCol(8);
+  const period = months.length ? months[0].short + " — " + months[months.length - 1].short : "";
+  kpiEl.innerHTML = [
+    ["Затраты", rub(costs)], ["Лиды", nf0.format(leads)], ["Сделки", nf0.format(deals)], ["Выручка", rub(rev)]
+  ].map(([k, v]) => `<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="n">Итого, ${esc(period)}</div></div>`).join("");
+  // charts
+  chartsEl.innerHTML = UNIT_CHARTS.map((c, i) => `<div class="card chart-card"><h3>${c.title}</h3><div class="last" id="${key}Last${i}"></div><div class="chart-box" id="${key}Box${i}"></div></div>`).join("");
+  const labels = months.map(r => r.short);
+  UNIT_CHARTS.forEach((c, i) => {
+    const vals = months.map(r => c.kind === "pct" ? pctVal(r.cells[c.col]) : num(r.cells[c.col]));
+    let lastI = -1; vals.forEach((v, j) => { if(v !== null) lastI = j; });
+    $(key + "Last" + i).innerHTML = lastI >= 0 ? `${esc(months[lastI].short)}: <b>${fmtKind(vals[lastI], c.kind)}</b>` : "Нет данных";
+    const cv = ensureCanvas(key + "Box" + i, 240);
+    const color = tok("--accent");
+    const ds = c.type === "line"
+      ? {data: vals, borderColor: color, backgroundColor: color + "22", fill: true, borderWidth: 2, tension: .25, spanGaps: false,
+         pointRadius: vals.map((v, j) => j === lastI ? 5 : 3), pointHoverRadius: 6, pointBackgroundColor: color, pointBorderColor: tok("--surface"), pointBorderWidth: 2}
+      : {data: vals, backgroundColor: vals.map((v, j) => j === lastI ? color : color + "99"), borderRadius: {topLeft:4, topRight:4}, borderSkipped: false, barPercentage: .7, categoryPercentage: .85};
+    state.charts[key + i] = new Chart(cv, {
+      type: c.type,
+      data: {labels, datasets: [{label: c.title, ...ds}]},
+      options: {
+        maintainAspectRatio: false, animation: {duration: 300},
+        interaction: {mode: "index", intersect: false},
+        scales: {
+          x: {grid: {display: false}, border: {color: tok("--line")}, ticks: {color: tok("--ink-3"), font: baseFont(), maxRotation: 0, autoSkipPadding: 8}},
+          y: {beginAtZero: true, grid: {color: tok("--grid")}, border: {display: false},
+              ticks: {color: tok("--ink-3"), font: baseFont(), maxTicksLimit: 6, precision: c.kind === "int" ? 0 : undefined,
+                callback: (v) => c.kind === "pct" ? nf0.format(v) + "%" : c.kind === "rub" ? (Math.abs(v) >= 1e6 ? nf2.format(v/1e6).replace(/,00$/,"") + " млн" : Math.abs(v) >= 1e3 ? nf0.format(v/1e3) + " тыс" : nf0.format(v)) : nf0.format(v)}}
+        },
+        plugins: {legend: {display: false}, tooltip: {...tooltipStyle(), displayColors: false, callbacks: {label: (ctx) => fmtKind(ctx.raw, c.kind)}}}
+      }
     });
-    return keys[0];
+  });
+}
+
+/* ---------- render orchestration ---------- */
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch])); }
+const rendered = {};
+function renderTab(name){
+  if(typeof Chart === "undefined") return;
+  if(name === "reasons") renderReasons();
+  else if(name === "sources") renderSources();
+  else renderUnit(name);
+  rendered[name] = state.version;
+}
+function rerenderAll(){ Object.keys(rendered).forEach(k => delete rendered[k]); renderTab(state.tab); }
+function setModel(model){
+  state.model = model; state.version = (state.version || 0) + 1;
+  Object.keys(rendered).forEach(k => delete rendered[k]);
+  renderTab(state.tab);
+}
+
+/* ---------- status ---------- */
+function setStatus(kind, text){ $("dot").className = "dot" + (kind ? " " + kind : ""); $("statusText").textContent = text; }
+function timeStr(ms){ return new Date(ms).toLocaleString("ru-RU", {day:"numeric", month:"long", hour:"2-digit", minute:"2-digit"}); }
+function pageNotice(title, text, withRetry){
+  $("pageNotice").innerHTML = title ? `<div class="notice" style="margin-top:20px"><b>${esc(title)}</b>${esc(text)}${withRetry ? ' <button class="btn" type="button" id="retryBtn" style="margin-left:8px">Повторить</button>' : ""}</div>` : "";
+  const r = $("retryBtn"); if(r) r.addEventListener("click", () => manualRefresh());
+}
+
+/* ---------- data sources ---------- */
+let mcpRef = null, retriedOnce = false;
+function decodeB64(b64){ const bin = atob(b64); const u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+function handlePayload(result){
+  let p = result.payload;
+  if(typeof p === "string"){ try{ p = JSON.parse(p); }catch(e){ p = {content: p}; } }
+  const b64 = p && (p.content || p.data || p.base64Content);
+  if(!b64) throw new Error("В ответе Google Drive нет содержимого файла");
+  const wb = XLSX.read(decodeB64(b64), {type: "array", cellText: true, cellDates: false});
+  setModel(modelFromWorkbook(wb));
+  pageNotice(null);
+  const when = result.cache && result.cache.storedAt ? result.cache.storedAt : Date.now();
+  setStatus("live", "Данные из Google Таблицы · обновлено " + timeStr(when));
+}
+const ERR_TEXT = {
+  server_not_connected: ["Google Drive не подключён", "Подключите Google Drive в claude.ai: Настройки → Коннекторы, затем обновите страницу."],
+  selection_required: ["Выберите аккаунт Google Drive", "У вас подключено несколько Google Drive. Выберите нужный в запросе claude.ai и обновите страницу."],
+  needs_reauth: ["Нужно переподключить Google Drive", "Доступ истёк. Переподключите Google Drive в claude.ai: Настройки → Коннекторы."],
+  not_in_manifest: ["Доступ к Google Drive выключен", "Вы отклонили или отключили доступ этой страницы к Google Drive. Разрешите его в настройках артефакта, чтобы видеть данные."],
+  blocked_by_policy: ["Google Drive заблокирован политикой", "Администратор организации запретил этот коннектор."],
+  approval_required: ["Нужно одобрение администратора", "Политика организации требует подтверждать каждый вызов Google Drive."],
+  consent_required: ["Нужно разрешение", "Разрешите странице читать Google Drive и нажмите «Повторить»."]
+};
+const DENIAL = new Set(["needs_reauth","server_not_connected","blocked_by_policy","approval_required","not_in_manifest","selection_required","consent_required"]);
+function handleError(err){
+  const code = err && err.code || "upstream_error";
+  if(DENIAL.has(code)){
+    state.model = null;
+    ["reasonsBox","sourcesBox"].forEach(id => { destroy(id.replace("Box","")); $(id).innerHTML = ""; });
+    const [t, x] = ERR_TEXT[code] || ["Нет доступа", err.message || ""];
+    setStatus("err", t); pageNotice(t, " " + x, code === "consent_required");
+    return;
   }
-
-  return gviz(cfg.gid).then(function(grid){
-    var head = grid[0] || [];
-    COLS = head.slice(1).map(function(c, i){
-      return String(c || "").trim() || ("Ряд " + (i + 1));
-    });
-    DATA = grid.slice(1).map(function(cells){
-      return {
-        name: String(cells[0] || "").trim(),
-        values: COLS.map(function(_, i){ return toNum(cells[i + 1]) || 0; })
-      };
-    }).filter(function(d){ return d.name; });
-
-    if (!DATA.length) throw new Error("в листе нет строк с данными");
-    render(buildFilter());
-  }).catch(function(e){
-    rowsEl.innerHTML = '<div class="status err"></div>';
-    rowsEl.firstChild.textContent =
-      "Не удалось прочитать вкладку gid=" + cfg.gid + ": " + e.message +
-      ". Проверьте доступ к таблице по ссылке и номер вкладки в блоке НАСТРОЙКА.";
-  });
+  if(err && err.retryable && !retriedOnce){
+    retriedOnce = true;
+    setTimeout(() => { mcpRef && mcpRef.invalidate(SERVER, TOOL).catch(() => {}); }, (err.retryAfterMs || 1500) + Math.random() * 1000);
+  }
+  if(state.model){ setStatus("err", "Не удалось обновить, показаны последние данные"); }
+  else { setStatus("err", "Не удалось загрузить данные"); pageNotice("Не удалось загрузить таблицу", " " + (err && err.message ? err.message : "Google Drive не ответил.") + " ", true); }
 }
-
-/* ── юнит-экономика ──────────────────────────────────────────────── */
-
-/* Лист -> {headers:[...], rows:[{kind:"year"|"month", label, cells:[...]}]} */
-function parseUE(grid){
-  var headers = null, rows = [], year = null;
-
-  grid.forEach(function(cells){
-    var first = String(cells[0] || "").trim();
-    if (!headers){
-      if (/^месяц$/i.test(first)) headers = cells.map(function(c){ return String(c || "").trim(); });
-      return;
-    }
-    var ym = first.match(/^(20\d\d)/);
-    if (ym){ year = +ym[1]; rows.push({ kind: "year", label: first }); return; }
-    if (MONTHS.indexOf(first) < 0) return;
-    rows.push({ kind: "month", label: first, year: year, cells: cells });
-  });
-
-  return { headers: headers, rows: rows };
+async function manualRefresh(){
+  retriedOnce = false;
+  setStatus("", "Обновляю…");
+  if(mcpRef){ try{ await mcpRef.invalidate(SERVER, TOOL); }catch(e){ startWatch(true); } }
+  else { loadViaPublic(); }
 }
+$("refresh").addEventListener("click", manualRefresh);
 
-function renderUETable(el, ue){
-  el.textContent = "";
-  var thead = document.createElement("thead"), htr = document.createElement("tr");
-  ue.headers.forEach(function(h){
-    var th = document.createElement("th");
-    th.textContent = h;
-    htr.appendChild(th);
-  });
-  thead.appendChild(htr);
-  el.appendChild(thead);
-
-  var tb = document.createElement("tbody");
-  ue.rows.forEach(function(r){
-    var tr = document.createElement("tr");
-    if (r.kind === "year"){
-      tr.className = "year";
-      var td = document.createElement("td");
-      td.colSpan = ue.headers.length;
-      td.textContent = r.label;
-      tr.appendChild(td);
-    } else {
-      ue.headers.forEach(function(_, i){
-        var td = document.createElement("td");
-        td.textContent = cellText(r.cells[i]);
-        if (td.textContent === "—") td.className = "na";
-        tr.appendChild(td);
-      });
-    }
-    tb.appendChild(tr);
-  });
-  el.appendChild(tb);
+let unwatch = null;
+function startWatch(){
+  if(unwatch) unwatch();
+  unwatch = mcpRef.watchTool(SERVER, TOOL, {fileId: SHEET_ID, exportMimeType: XLSX_MIME}, (ev) => {
+    if(ev.type === "data"){ try{ handlePayload(ev.result); }catch(e){ handleError({code:"upstream_error", message: e.message}); } }
+    else handleError(ev.error);
+  }, {cache: {staleTime: 60000, gcTime: 86400000}, refetchInterval: REFRESH_MS});
 }
-
-/* ── линейный график: одна серия, поэтому легенда не нужна ───────── */
-var tip = document.getElementById("tip");
-function showTip(e, text){
-  tip.textContent = text;
-  tip.style.left = (e.clientX + 12) + "px";
-  tip.style.top  = (e.clientY - 34) + "px";
-  tip.style.opacity = 1;
+async function loadViaPublic(){
+  try{
+    const m = await loadPublic(); setModel(m); pageNotice(null);
+    setStatus("live", "Данные из Google Таблицы · обновлено " + timeStr(Date.now()));
+  }catch(e){
+    setStatus("err", "Не удалось загрузить данные");
+    pageNotice("Таблица недоступна", " Откройте доступ к Google Таблице по ссылке («Все, у кого есть ссылка — читатель») или откройте отчёт в claude.ai с подключённым Google Drive.", true);
+  }
 }
-function hideTip(){ tip.style.opacity = 0; }
-
-function lineChart(points, fmt){
-  // points: [{label, v}] — только месяцы с числом
-  var W = 300, H = 120, PT = 10, PB = 18, PL = 4, PR = 4;
-  var xs = points.length, svgNS = "http://www.w3.org/2000/svg";
-  var svg = document.createElementNS(svgNS, "svg");
-  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
-  svg.setAttribute("preserveAspectRatio", "none");
-  svg.setAttribute("role", "img");
-
-  var vals = points.map(function(p){ return p.v; });
-  var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-  if (min > 0) min = 0;                       // шкала от нуля — иначе рост врёт
-  if (max === min) max = min + 1;
-
-  function X(i){ return xs < 2 ? (W - PL - PR) / 2 + PL
-                               : PL + i * (W - PL - PR) / (xs - 1); }
-  function Y(v){ return PT + (1 - (v - min) / (max - min)) * (H - PT - PB); }
-
-  // базовая линия
-  var gl = document.createElementNS(svgNS, "line");
-  gl.setAttribute("class", "gl");
-  gl.setAttribute("x1", 0); gl.setAttribute("x2", W);
-  gl.setAttribute("y1", Y(min)); gl.setAttribute("y2", Y(min));
-  svg.appendChild(gl);
-
-  var d = points.map(function(p, i){ return (i ? "L" : "M") + X(i) + " " + Y(p.v); }).join(" ");
-
-  var area = document.createElementNS(svgNS, "path");
-  area.setAttribute("class", "ar");
-  area.setAttribute("d", d + " L" + X(xs - 1) + " " + Y(min) + " L" + X(0) + " " + Y(min) + " Z");
-  svg.appendChild(area);
-
-  var line = document.createElementNS(svgNS, "path");
-  line.setAttribute("class", "ln");
-  line.setAttribute("d", d);
-  svg.appendChild(line);
-
-  points.forEach(function(p, i){
-    var c = document.createElementNS(svgNS, "circle");
-    c.setAttribute("class", "dot");
-    c.setAttribute("cx", X(i)); c.setAttribute("cy", Y(p.v)); c.setAttribute("r", 3);
-    svg.appendChild(c);
-
-    var hit = document.createElementNS(svgNS, "rect");   // цель наведения крупнее точки
-    hit.setAttribute("class", "hit");
-    hit.setAttribute("x", X(i) - 9); hit.setAttribute("y", 0);
-    hit.setAttribute("width", 18); hit.setAttribute("height", H);
-    hit.addEventListener("mousemove", function(e){ showTip(e, p.label + " — " + fmt(p.v)); });
-    hit.addEventListener("mouseleave", hideTip);
-    svg.appendChild(hit);
-  });
-
-  // подписи только по краям — иначе они налезают друг на друга
-  [0, xs - 1].forEach(function(i, k){
-    if (xs < 2 && k) return;
-    var t = document.createElementNS(svgNS, "text");
-    t.setAttribute("class", "xl");
-    t.setAttribute("x", X(i)); t.setAttribute("y", H - 4);
-    t.setAttribute("text-anchor", k ? "end" : "start");
-    t.textContent = points[i].label;
-    svg.appendChild(t);
-  });
-
-  return svg;
+let publicTimer = null;
+async function boot(){
+  const hasClaude = !!(window.claude && typeof window.claude.use === "function");
+  let mcp = null;
+  if(hasClaude){ try{ mcp = await window.claude.use("mcp"); }catch(e){ mcp = null; } }
+  if(mcp){ mcpRef = mcp; startWatch(); return; }
+  if(hasClaude){
+    setStatus("err", "Подключение к данным недоступно");
+    pageNotice("Живые данные недоступны в этом просмотре", " Откройте отчёт в claude.ai под своим аккаунтом с подключённым Google Drive.", false);
+    return;
+  }
+  // standalone copy (opened as a file / on another host): read the public sheet
+  loadViaPublic();
+  publicTimer = setInterval(() => { if(!document.hidden) loadViaPublic(); }, REFRESH_MS);
 }
-
-function renderUECharts(host, ue){
-  host.textContent = "";
-  UE_CHARTS.forEach(function(spec){
-    var idx = colIndex(spec.col), fmt = FMT[spec.fmt];
-    var points = ue.rows.filter(function(r){ return r.kind === "month"; })
-      .map(function(r){
-        return { label: r.label.slice(0, 3) + " " + String(r.year || "").slice(2),
-                 v: toNum(r.cells[idx]) };
-      })
-      .filter(function(p){ return p.v != null; });
-
-    var box = document.createElement("div");
-    box.className = "chart";
-    var h = document.createElement("h3");
-    h.textContent = spec.title;
-    box.appendChild(h);
-
-    if (!points.length){
-      var s = document.createElement("div");
-      s.className = "status";
-      s.textContent = "нет данных";
-      box.appendChild(s);
-      host.appendChild(box);
-      return;
-    }
-
-    var last = points[points.length - 1];
-    var lv = document.createElement("div");
-    lv.className = "last";
-    lv.textContent = fmt(last.v);
-    box.appendChild(lv);
-    var lc = document.createElement("div");
-    lc.className = "lastcap";
-    lc.textContent = last.label + " · последний месяц";
-    box.appendChild(lc);
-
-    box.appendChild(lineChart(points, fmt));
-    host.appendChild(box);
-  });
-}
-
-function loadUE(cfg){
-  return gviz(cfg.gid).then(function(grid){
-    var ue = parseUE(grid);
-    if (!ue.headers) throw new Error("не нашлась строка заголовков «Месяц | Затраты …»");
-    if (!ue.rows.length) throw new Error("не найдено ни одной помесячной строки");
-    renderUETable(document.getElementById(cfg.table), ue);
-    renderUECharts(document.getElementById(cfg.charts), ue);
-    document.getElementById(cfg.status).remove();
-  }).catch(function(e){
-    var st = document.getElementById(cfg.status);
-    st.className = "status err";
-    st.textContent = "Не удалось прочитать вкладку gid=" + cfg.gid + ": " + e.message +
-      ". Проверьте доступ к таблице по ссылке и номер вкладки в блоке НАСТРОЙКА.";
-  });
-}
-
-/* Google отбивает пачку одновременных запросов — читаем по очереди. */
-PANELS.map(function(cfg){ return function(){ return buildPanel(cfg); }; })
-  .concat(UE_SHEETS.map(function(cfg){ return function(){ return loadUE(cfg); }; }))
-  .reduce(function(chain, step){ return chain.then(step); }, Promise.resolve());
+boot();
+})();
 </script>
+
 </body>
 </html>
