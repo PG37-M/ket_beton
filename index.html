@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Отчёт MSG</title>
+<title>Отчёт по лидам и юнит-экономике</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
-  /* Блок настройки (id таблицы, список вкладок) — в самом низу файла. */
+  /* ── НАСТРОЙКА: id таблицы и номера вкладок — внизу файла, в <script> ── */
 
   :root{
     --ground:#f4f5f7; --surface:#fff; --line:#dfe3e8;
     --ink:#161a1f; --muted:#5d6874; --faint:#8b95a1;
     --accent:#2a6fd6; --accent-soft:#e1ecfb; --accent-2:#c7dcf6;
-    --warn:#b8571f; --good:#1b7a4b; --bad:#c0392b;
+    --warn:#b8571f; --good:#1d7a4c; --bad:#b8323c;
     --serif:"Source Serif 4",Georgia,serif;
     --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
     color-scheme:light;
@@ -23,7 +23,7 @@
       --ground:#14181d; --surface:#1b2027; --line:#2b323b;
       --ink:#eef1f5; --muted:#9ba6b3; --faint:#78838f;
       --accent:#5a9bf0; --accent-soft:#1e2b3c; --accent-2:#2c405a;
-      --warn:#e08a4e; --good:#4cb583; --bad:#e8705f;
+      --warn:#e08a4e; --good:#57b98a; --bad:#e8737d;
     }
   }
   :root[data-theme="dark"]{
@@ -31,33 +31,29 @@
     --ground:#14181d; --surface:#1b2027; --line:#2b323b;
     --ink:#eef1f5; --muted:#9ba6b3; --faint:#78838f;
     --accent:#5a9bf0; --accent-soft:#1e2b3c; --accent-2:#2c405a;
-    --warn:#e08a4e; --good:#4cb583; --bad:#e8705f;
+    --warn:#e08a4e; --good:#57b98a; --bad:#e8737d;
   }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;}
-  img{max-width:100%;}
-  .wrap{max-width:900px;margin:0 auto;padding-inline:16px;padding-block:40px 56px;display:flex;flex-direction:column;gap:32px;}
+  .wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:40px 56px;display:flex;flex-direction:column;gap:34px;}
 
   .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;}
   h1{font-family:var(--serif);font-size:clamp(28px,5vw,40px);font-weight:600;line-height:1.15;margin:6px 0 8px;text-wrap:balance;letter-spacing:-.01em;}
   .sub{color:var(--muted);max-width:62ch;margin:0;}
-  .sectiontitle{font-family:var(--serif);font-size:24px;font-weight:600;margin:8px 0 -14px;}
+  h2.sec{font-family:var(--serif);font-size:23px;font-weight:600;margin:0;letter-spacing:-.01em;}
+  .seclead{color:var(--muted);font-size:14px;margin:4px 0 0;}
 
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
   .kpi{background:var(--surface);padding:16px 18px;}
-  .kpi b{display:block;font-family:var(--serif);font-size:28px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;}
+  .kpi b{display:block;font-family:var(--serif);font-size:30px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;}
   .kpi span{display:block;font-size:12.5px;color:var(--muted);margin-top:4px;}
-  .kpi b.pos{color:var(--good);} .kpi b.neg{color:var(--bad);}
 
   .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 20px 14px;}
   .panelhead{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;margin-bottom:18px;}
   .panelhead h2{font-family:var(--serif);font-size:19px;font-weight:600;margin:0;}
   .n{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums;}
 
-  .controls{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
-  .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-  .ctl > .cap{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;min-width:74px;}
-  .seg{display:inline-flex;flex-wrap:wrap;background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;}
+  .seg{display:inline-flex;background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;}
   .seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--muted);padding:5px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;}
   .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);}
   .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
@@ -69,23 +65,39 @@
   .label{font-size:14px;}
   .val{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
   .val strong{color:var(--ink);font-weight:600;}
-  .track{height:10px;background:var(--ground);border-radius:3px;overflow:hidden;display:flex;}
+  .track{height:10px;background:var(--ground);border-radius:3px;overflow:hidden;}
   .row:hover .track{background:var(--accent-2);}
   .bar{height:100%;background:var(--accent);border-radius:3px;transition:width .35s cubic-bezier(.2,.7,.3,1);}
-  .bar.neg{background:var(--bad);margin-left:auto;}
   .row.zero .label,.row.zero .val{color:var(--faint);}
-  .row.cur{background:var(--accent-soft);}
-  .row.cur .label{font-weight:600;}
+
+  /* таблица юнит-экономики — как в Google Таблице */
+  .tablewrap{overflow-x:auto;margin:0 -20px;padding:0 20px;}
+  table.ue{border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;min-width:100%;}
+  table.ue th,table.ue td{padding:7px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line);}
+  table.ue th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-weight:600;text-align:right;vertical-align:bottom;position:sticky;top:0;background:var(--surface);}
+  table.ue th:first-child,table.ue td:first-child{text-align:left;position:sticky;left:0;background:var(--surface);}
+  table.ue tr:hover td{background:var(--accent-soft);}
+  table.ue tr.year td{font-weight:600;color:var(--muted);background:var(--ground);font-size:12px;letter-spacing:.04em;}
+  table.ue tr.year:hover td{background:var(--ground);}
+  table.ue td.na{color:var(--faint);}
+
+  /* графики */
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+  .chart{background:var(--surface);padding:16px 18px 12px;}
+  .chart h3{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-weight:600;margin:0 0 2px;}
+  .chart .last{font-family:var(--serif);font-size:24px;font-weight:600;line-height:1.2;font-variant-numeric:tabular-nums;}
+  .chart .lastcap{font-size:12px;color:var(--muted);margin-bottom:10px;}
+  .chart svg{display:block;width:100%;height:120px;overflow:visible;}
+  .chart .gl{stroke:var(--line);stroke-width:1;}
+  .chart .ln{fill:none;stroke:var(--accent);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
+  .chart .ar{fill:var(--accent);opacity:.09;}
+  .chart .dot{fill:var(--accent);stroke:var(--surface);stroke-width:2;}
+  .chart .hit{fill:transparent;cursor:pointer;}
+  .chart .xl{font-size:9.5px;fill:var(--faint);}
+  .tip{position:fixed;pointer-events:none;z-index:9;background:var(--ink);color:var(--ground);font-size:12px;padding:6px 9px;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity .1s;font-variant-numeric:tabular-nums;}
 
   .status{color:var(--muted);font-size:14px;padding:8px 10px;}
   .status.err{color:var(--warn);}
-
-  .tablewrap{overflow-x:auto;margin-top:6px;}
-  table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums;}
-  th,td{text-align:right;padding:8px 10px;border-top:1px solid var(--line);white-space:nowrap;}
-  th:first-child,td:first-child{text-align:left;}
-  thead th{border-top:0;color:var(--faint);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;}
-  td.pos{color:var(--good);} td.neg{color:var(--bad);}
 
   .note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;}
   .note h3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
@@ -98,12 +110,10 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Битрикс24 · Юнит-экономика MSG</div>
-    <h1>Отчёт по лидам и экономике каналов</h1>
-    <p class="sub">Причины отказов за 01.07 — 31.08.2026 и помесячная юнит-экономика направлений. Все цифры подтягиваются из Google Таблицы при каждом открытии страницы.</p>
+    <div class="eyebrow">Битрикс24 · MSG</div>
+    <h1>Отчёт по лидам и юнит-экономике</h1>
+    <p class="sub">Причины отказов за 01.07 — 31.08.2026 и помесячная юнит-экономика по стяжке/штукатурке и промышленным полам. Все цифры подтягиваются из Google Таблицы при каждом открытии страницы.</p>
   </header>
-
-  <div class="sectiontitle">Причины отказов</div>
 
   <div class="kpis">
     <div class="kpi"><b>315</b><span>сделок за период</span></div>
@@ -128,64 +138,51 @@
   <section class="panel">
     <div class="panelhead">
       <h2>Сделки по источникам</h2>
-      <div class="seg" id="seg-2" role="group" aria-label="Стадия сделки"></div>
+      <div class="seg" id="seg-2" role="group" aria-label="Стадия"></div>
       <div class="n" id="total-2"></div>
     </div>
     <div class="rows" id="rows-2"><div class="status">Загружаем данные из таблицы…</div></div>
   </section>
 
-  <div class="sectiontitle">Юнит-экономика по месяцам</div>
-
-  <div class="kpis" id="ue-kpis">
-    <div class="kpi"><b>—</b><span>затраты на продвижение</span></div>
-    <div class="kpi"><b>—</b><span>лиды</span></div>
-    <div class="kpi"><b>—</b><span>сделки</span></div>
-    <div class="kpi"><b>—</b><span>выручка</span></div>
-  </div>
-
-  <section class="panel">
-    <div class="panelhead">
-      <h2 id="ue-title">Сравнение направлений</h2>
-      <div class="n" id="ue-caption"></div>
-    </div>
-    <div class="controls">
-      <div class="ctl"><span class="cap">Месяц</span><div class="seg" id="ue-months" role="group" aria-label="Месяц"></div></div>
-      <div class="ctl"><span class="cap">Направление</span><div class="seg" id="ue-channels" role="group" aria-label="Направление"></div></div>
-    </div>
-    <div class="rows" id="ue-rows"><div class="status">Загружаем юнит-экономику…</div></div>
-    <div class="tablewrap"><table id="ue-table"></table></div>
+  <section>
+    <h2 class="sec">Юнит-экономика: стяжка и штукатурка</h2>
+    <p class="seclead">Помесячно, в тех же графах, что и в Google Таблице.</p>
   </section>
+  <section class="panel">
+    <div class="tablewrap"><table class="ue" id="tbl-a"></table></div>
+    <div class="status" id="st-a">Загружаем юнит-экономику…</div>
+  </section>
+  <div class="charts" id="ch-a"></div>
+
+  <section>
+    <h2 class="sec">Юнит-экономика: промышленные полы</h2>
+    <p class="seclead">Помесячно, в тех же графах, что и в Google Таблице.</p>
+  </section>
+  <section class="panel">
+    <div class="tablewrap"><table class="ue" id="tbl-b"></table></div>
+    <div class="status" id="st-b">Загружаем юнит-экономику…</div>
+  </section>
+  <div class="charts" id="ch-b"></div>
 
   <div class="note">
-    <h3>Как считается юнит-экономика</h3>
-    <ul>
-      <li>Валовая прибыль = выручка × рентабельность направления за этот месяц (она задана в таблице и отличается по направлениям: 5–12%).</li>
-      <li>ROI = (валовая прибыль − затраты на продвижение) ÷ затраты. Отрицательный ROI означает, что канал за месяц не окупил рекламу.</li>
-      <li>Стоимость лида и сделки пересчитываются от затрат и факта месяца, а не берутся из таблицы — так не возникает ошибок деления на ноль.</li>
-      <li>Месяцы без сделок дают пустые ячейки в стоимости сделки и среднем чеке — это не ошибка, а отсутствие продаж.</li>
-      <li>Постоянные расходы (зарплаты, аренда, техника) сюда не входят. Это экономика маркетинга, а не P&amp;L компании.</li>
-    </ul>
-  </div>
-
-  <div class="note">
-    <h3>Оговорки к причинам отказов</h3>
+    <h3>Оговорки к данным</h3>
     <ul>
       <li>Авито даёт 85% потока и 95% отказов — сравнивать структуру причин между каналами статистически некорректно, у «прочих» всего 9 отказов.</li>
       <li>Формулировка «Нет обратной связи» не различает, кто прервал коммуникацию — клиент или менеджер.</li>
-      <li>24 сделки в стадии «Спам» в расчёт причин не включены; у 1 отказной сделки причина не заполнена.</li>
+      <li>24 сделки в стадии «Спам» не учитывались; у 1 отказной сделки причина не заполнена.</li>
+      <li>Прочерк в таблице — пустая ячейка или ошибка формулы в исходной таблице (#DIV/0!, #REF!). В графиках такие месяцы пропускаются.</li>
+      <li>Столбцы «Просмотры» и «Лиды» до 2026 года не заполнялись, поэтому динамика конверсии начинается с января 2026.</li>
     </ul>
   </div>
 </div>
+<div class="tip" id="tip"></div>
 
 <script>
 /* ═══ НАСТРОЙКА ══════════════════════════════════════════════════════
    SHEET_ID — id из адреса таблицы:
               docs.google.com/spreadsheets/d/ЭТОТ_КУСОК/edit
-   PANELS   — простые вкладки «подпись + числовые столбцы»
-   UE_SHEETS — вкладки с юнит-экономикой (помесячные таблицы)
-
    Вкладки задаются номером gid, а не названием: номер виден в адресе,
-   когда вкладка открыта (…/edit?gid=36356503), и не меняется при
+   когда вкладка открыта (…/edit?gid=1225345247), и не меняется при
    переименовании вкладки.
 
    Таблица должна быть открыта по ссылке: Настройки доступа →
@@ -198,10 +195,21 @@ var PANELS = [
   { gid: "410689789",  suffix: "2", allLabel: "" }                // Источники
 ];
 
+/* Вкладки юнит-экономики. Колонки берутся по буквам столбцов,
+   как они лежат на листе: A — месяц, B — затраты, … O — ROI. */
 var UE_SHEETS = [
-  { gid: "36356503",   name: "Бетон" },
-  { gid: "1410855039", name: "Инертные материалы" },
-  { gid: "1527705359", name: "ЖБИ" }
+  { gid: "1225345247", table: "tbl-a", status: "st-a", charts: "ch-a" },  // стяжка/штукатурка
+  { gid: "82568387",   table: "tbl-b", status: "st-b", charts: "ch-b" }   // промышленные полы
+];
+
+/* Графики под таблицей: столбец листа + как подписывать значение. */
+var UE_CHARTS = [
+  { col: "G", title: "Конверсия просмотры/лиды", fmt: "pct" },
+  { col: "H", title: "Конверсия лид/сделка",     fmt: "pct" },
+  { col: "B", title: "Затраты на продвижение",   fmt: "money" },
+  { col: "D", title: "Лиды",                     fmt: "count" },
+  { col: "F", title: "Сделки",                   fmt: "count" },
+  { col: "I", title: "Выручка",                  fmt: "money" }
 ];
 
 /* ── общие утилиты ───────────────────────────────────────────────── */
@@ -217,15 +225,17 @@ function count(x){
   if (x == null || !isFinite(x)) return "—";
   return Math.round(x).toLocaleString("ru-RU");
 }
-function pct(x){
+function pct(x){   // доля 0..1 -> «8,7%»
   if (x == null || !isFinite(x)) return "—";
-  return (x > 0 ? "+" : "") + nf1(x) + "%";
+  return nf1(x * 100) + "%";
 }
+var FMT = { money: money, count: count, pct: pct };
+
+function colIndex(letter){ return letter.toUpperCase().charCodeAt(0) - 65; }
 
 /* Лист читается как CSV: приходит ровно то, что видно в ячейках.
-   JSON-вариант навязывает колонке один тип, и текстовые шапки внутри
-   числовых столбцов терялись — из-за этого пропадали целые блоки.
-   Запросы идут по очереди, с одной повторной попыткой. */
+   JSON-вариант навязывает колонке один тип и стирает текст в числовых
+   столбцах. Запросы идут по очереди, с одной повторной попыткой. */
 function gviz(gid, retry){
   return gvizOnce(gid).catch(function(e){
     if (retry) throw e;
@@ -284,6 +294,13 @@ function toNum(v){
   return isPct ? n / 100 : n;
 }
 
+/* Ячейка для таблицы: показываем то же, что в Google Таблице,
+   а ошибки формул и пустоту — прочерком. */
+function cellText(v){
+  var t = String(v == null ? "" : v).replace(/ /g, " ").trim();
+  return (!t || t.charAt(0) === "#") ? "—" : t;
+}
+
 /* ── панели «подпись + ряды» (причины, источники) ────────────────── */
 function buildPanel(cfg){
   var rowsEl  = document.getElementById("rows-"  + cfg.suffix),
@@ -291,19 +308,20 @@ function buildPanel(cfg){
       segEl   = document.getElementById("seg-"   + cfg.suffix);
   var COLS = [], DATA = [];
 
-  function valueOf(d, src){
-    return src === "__all__"
-      ? d.values.reduce(function(a, b){ return a + b; }, 0)
-      : d.values[COLS.indexOf(src)];
-  }
-
   function render(src){
-    var vals = DATA.map(function(d){ return { name: d.name, v: valueOf(d, src) }; })
-                   .sort(function(a, b){ return b.v - a.v; });
+    var vals = DATA.map(function(d){
+      return {
+        name: d.name,
+        v: src === "__all__"
+             ? d.values.reduce(function(a, b){ return a + b; }, 0)
+             : d.values[COLS.indexOf(src)]
+      };
+    }).sort(function(a, b){ return b.v - a.v; });
+
     var sum = vals.reduce(function(s, d){ return s + d.v; }, 0);
     var max = Math.max.apply(null, vals.map(function(d){ return d.v; })) || 1;
     totalEl.textContent = "n = " + sum + " · " +
-      (src === "__all__" ? cfg.allLabel.toLowerCase() : src);
+      (src === "__all__" ? (cfg.allLabel || "всего") : src);
 
     rowsEl.textContent = "";
     vals.forEach(function(d){
@@ -326,7 +344,8 @@ function buildPanel(cfg){
   }
 
   function buildFilter(){
-    var keys = cfg.allLabel ? ["__all__"].concat(COLS) : COLS.slice();
+    var keys = (cfg.allLabel ? ["__all__"] : []).concat(COLS);
+    segEl.textContent = "";
     keys.forEach(function(c){
       var b = document.createElement("button");
       b.type = "button";
@@ -361,272 +380,196 @@ function buildPanel(cfg){
 }
 
 /* ── юнит-экономика ──────────────────────────────────────────────── */
-var UE = [];   // {channel, year, month, mi, spend, leads, deals, revenue, margin}
 
-function headerMap(cells){
-  var map = {};
-  cells.forEach(function(c, i){
-    var t = String(c || "").trim().toLowerCase();
-    if (!t) return;
-    if (t.indexOf("затрат") === 0) map.spend = i;
-    else if (t === "лиды") map.leads = i;
-    else if (t === "сделки") map.deals = i;
-    else if (t.indexOf("выручка") === 0) map.revenue = i;
-    else if (t.indexOf("рентабель") === 0) map.margin = i;
-    else if (t.indexOf("переход") === 0) map.clicks = i;
-  });
-  return map;
-}
-
-function num(cells, i){
-  return i == null ? null : toNum(cells[i]);
-}
-
-/* На листе может лежать несколько таблиц подряд: каждая начинается
-   строкой «Месяц | Затраты …». Блок с колонкой «Переходы» — это
-   Яндекс Директ, первый блок на листе Бетона — Авито. */
-function parseUE(baseName, grid){
-  var blocks = [];
-  var cur = null;
-  var year = null;
+/* Лист -> {headers:[...], rows:[{kind:"year"|"month", label, cells:[...]}]} */
+function parseUE(grid){
+  var headers = null, rows = [], year = null;
 
   grid.forEach(function(cells){
     var first = String(cells[0] || "").trim();
-
-    if (/^месяц$/i.test(first)) {                       // начало нового блока
-      var map = headerMap(cells);
-      cur = { name: baseName, map: map };
-      if (map.clicks != null) cur.name = baseName + " · Яндекс Директ";
-      else if (blocks.length === 0 && /бетон/i.test(baseName)) cur.name = baseName + " · Авито";
-      blocks.push(cur);
+    if (!headers){
+      if (/^месяц$/i.test(first)) headers = cells.map(function(c){ return String(c || "").trim(); });
       return;
     }
-    var ym = first.match(/^(20\d\d)/);                  // строка-разделитель года
-    if (ym) { year = +ym[1]; return; }
-
-    var mi = MONTHS.indexOf(first);
-    if (mi < 0 || !cur) return;
-
-    var spend = num(cells, cur.map.spend);
-    if (spend == null) return;
-    var margin = num(cells, cur.map.margin);
-    if (margin != null && margin > 1) margin = margin / 100;
-
-    UE.push({
-      channel: cur.name,
-      year: year || 2026,
-      month: first,
-      mi: mi,
-      spend: spend,
-      leads: num(cells, cur.map.leads),
-      deals: num(cells, cur.map.deals),
-      revenue: num(cells, cur.map.revenue),
-      margin: margin
-    });
+    var ym = first.match(/^(20\d\d)/);
+    if (ym){ year = +ym[1]; rows.push({ kind: "year", label: first }); return; }
+    if (MONTHS.indexOf(first) < 0) return;
+    rows.push({ kind: "month", label: first, year: year, cells: cells });
   });
+
+  return { headers: headers, rows: rows };
 }
 
-var UE_METRICS = [
-  { key:"spend",   label:"Затраты",        fmt:money, get:function(r){ return r.spend; } },
-  { key:"leads",   label:"Лиды",           fmt:count, get:function(r){ return r.leads; } },
-  { key:"deals",   label:"Сделки",         fmt:count, get:function(r){ return r.deals; } },
-  { key:"revenue", label:"Выручка",        fmt:money, get:function(r){ return r.revenue; } },
-  { key:"profit",  label:"Валовая прибыль",fmt:money, get:function(r){
-      return r.revenue != null && r.margin != null ? r.revenue * r.margin : null; } },
-  { key:"cpl",     label:"Цена лида",      fmt:money, get:function(r){
-      return r.leads ? r.spend / r.leads : null; } },
-  { key:"cpo",     label:"Цена сделки",    fmt:money, get:function(r){
-      return r.deals ? r.spend / r.deals : null; } },
-  { key:"check",   label:"Средний чек",    fmt:money, get:function(r){
-      return r.deals ? r.revenue / r.deals : null; } },
-  { key:"roi",     label:"ROI",            fmt:pct,   get:function(r){
-      if (!r.spend || r.revenue == null || r.margin == null) return null;
-      return (r.revenue * r.margin - r.spend) / r.spend * 100; } }
-];
-
-var uePeriods = [], ueCurPeriod = null;
-var ueChannels = [], ueCurChannel = "__all__";
-/* столбики всегда показывают выручку: «Все направления» — сравнение
-   направлений за месяц, конкретное направление — его динамику по месяцам.
-   Остальные показатели видны в таблице ниже. */
-var BAR = UE_METRICS.filter(function(m){ return m.key === "revenue"; })[0];
-
-function periodKey(r){ return r.year + "-" + r.mi; }
-function periodLabel(k){
-  var p = k.split("-");
-  return MONTHS[+p[1]].slice(0,3) + " " + String(p[0]).slice(2);
-}
-
-function ueRender(){
-  var one = ueCurChannel !== "__all__";
-  var rows = UE.filter(function(r){
-    return periodKey(r) === ueCurPeriod && (!one || r.channel === ueCurChannel);
+function renderUETable(el, ue){
+  el.textContent = "";
+  var thead = document.createElement("thead"), htr = document.createElement("tr");
+  ue.headers.forEach(function(h){
+    var th = document.createElement("th");
+    th.textContent = h;
+    htr.appendChild(th);
   });
-  var p = ueCurPeriod.split("-");
-  document.getElementById("ue-caption").textContent =
-    MONTHS[+p[1]] + " " + p[0] + " · " +
-    (one ? ueCurChannel : rows.length + " направл.");
-  document.getElementById("ue-title").textContent =
-    one ? "Выручка по месяцам" : "Сравнение направлений";
-
-  // KPI-плитки — сводно за месяц
-  var sum = function(f){
-    return rows.reduce(function(s, r){ var v = f(r); return s + (v || 0); }, 0);
-  };
-  var tiles = [
-    [money(sum(function(r){ return r.spend; })),   "затраты на продвижение"],
-    [count(sum(function(r){ return r.leads; })),   "лиды"],
-    [count(sum(function(r){ return r.deals; })),   "сделки"],
-    [money(sum(function(r){ return r.revenue; })), "выручка"]
-  ];
-  var kp = document.getElementById("ue-kpis");
-  kp.textContent = "";
-  tiles.forEach(function(t){
-    var d = document.createElement("div");
-    d.className = "kpi";
-    d.innerHTML = "<b></b><span></span>";
-    d.querySelector("b").textContent = t[0];
-    d.querySelector("span").textContent = t[1];
-    kp.appendChild(d);
-  });
-
-  // столбики: по направлениям за месяц либо по месяцам одного направления
-  var metric = BAR, vals;
-  if (one) {
-    vals = UE.filter(function(r){ return r.channel === ueCurChannel; })
-      .sort(function(a, b){ return (a.year - b.year) || (a.mi - b.mi); })
-      .map(function(r){
-        return { name: periodLabel(periodKey(r)), v: metric.get(r),
-                 cur: periodKey(r) === ueCurPeriod };
-      });
-  } else {
-    vals = rows.map(function(r){ return { name: r.channel, v: metric.get(r) }; })
-               .sort(function(a, b){ return (b.v || 0) - (a.v || 0); });
-  }
-  var maxAbs = Math.max.apply(null, vals.map(function(d){
-    return d.v == null ? 0 : Math.abs(d.v); })) || 1;
-
-  var host = document.getElementById("ue-rows");
-  host.textContent = "";
-  vals.forEach(function(d){
-    var row = document.createElement("div");
-    row.className = "row" + (d.v ? "" : " zero") + (d.cur ? " cur" : "");
-    row.tabIndex = 0;
-    row.title = d.name + " — " + metric.label + ": " + metric.fmt(d.v);
-    row.innerHTML = '<div class="rowtop"><span class="label"></span>' +
-      '<span class="val"><strong></strong></span></div>' +
-      '<div class="track"><div class="bar"></div></div>';
-    row.querySelector(".label").textContent = d.name;
-    row.querySelector(".val strong").textContent = metric.fmt(d.v);
-    var bar = row.querySelector(".bar");
-    bar.style.width = (d.v == null ? 0 : Math.abs(d.v) / maxAbs * 100) + "%";
-    if (d.v != null && d.v < 0) bar.classList.add("neg");
-    host.appendChild(row);
-  });
-
-  // подробная таблица
-  var tbl = document.getElementById("ue-table");
-  tbl.textContent = "";
-  var thead = document.createElement("thead");
-  var htr = document.createElement("tr");
-  ["Направление"].concat(UE_METRICS.map(function(m){ return m.label; }))
-    .forEach(function(h){
-      var th = document.createElement("th");
-      th.textContent = h;
-      htr.appendChild(th);
-    });
   thead.appendChild(htr);
-  tbl.appendChild(thead);
+  el.appendChild(thead);
+
   var tb = document.createElement("tbody");
-  rows.forEach(function(r){
+  ue.rows.forEach(function(r){
     var tr = document.createElement("tr");
-    var td0 = document.createElement("td");
-    td0.textContent = r.channel;
-    tr.appendChild(td0);
-    UE_METRICS.forEach(function(m){
+    if (r.kind === "year"){
+      tr.className = "year";
       var td = document.createElement("td");
-      var v = m.get(r);
-      td.textContent = m.fmt(v);
-      if (m.key === "roi" && v != null) td.className = v >= 0 ? "pos" : "neg";
+      td.colSpan = ue.headers.length;
+      td.textContent = r.label;
       tr.appendChild(td);
-    });
+    } else {
+      ue.headers.forEach(function(_, i){
+        var td = document.createElement("td");
+        td.textContent = cellText(r.cells[i]);
+        if (td.textContent === "—") td.className = "na";
+        tr.appendChild(td);
+      });
+    }
     tb.appendChild(tr);
   });
-  tbl.appendChild(tb);
+  el.appendChild(tb);
+}
 
-  Array.prototype.forEach.call(document.getElementById("ue-months").children, function(b){
-    b.setAttribute("aria-pressed", String(b.dataset.k === ueCurPeriod));
+/* ── линейный график: одна серия, поэтому легенда не нужна ───────── */
+var tip = document.getElementById("tip");
+function showTip(e, text){
+  tip.textContent = text;
+  tip.style.left = (e.clientX + 12) + "px";
+  tip.style.top  = (e.clientY - 34) + "px";
+  tip.style.opacity = 1;
+}
+function hideTip(){ tip.style.opacity = 0; }
+
+function lineChart(points, fmt){
+  // points: [{label, v}] — только месяцы с числом
+  var W = 300, H = 120, PT = 10, PB = 18, PL = 4, PR = 4;
+  var xs = points.length, svgNS = "http://www.w3.org/2000/svg";
+  var svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+  svg.setAttribute("preserveAspectRatio", "none");
+  svg.setAttribute("role", "img");
+
+  var vals = points.map(function(p){ return p.v; });
+  var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+  if (min > 0) min = 0;                       // шкала от нуля — иначе рост врёт
+  if (max === min) max = min + 1;
+
+  function X(i){ return xs < 2 ? (W - PL - PR) / 2 + PL
+                               : PL + i * (W - PL - PR) / (xs - 1); }
+  function Y(v){ return PT + (1 - (v - min) / (max - min)) * (H - PT - PB); }
+
+  // базовая линия
+  var gl = document.createElementNS(svgNS, "line");
+  gl.setAttribute("class", "gl");
+  gl.setAttribute("x1", 0); gl.setAttribute("x2", W);
+  gl.setAttribute("y1", Y(min)); gl.setAttribute("y2", Y(min));
+  svg.appendChild(gl);
+
+  var d = points.map(function(p, i){ return (i ? "L" : "M") + X(i) + " " + Y(p.v); }).join(" ");
+
+  var area = document.createElementNS(svgNS, "path");
+  area.setAttribute("class", "ar");
+  area.setAttribute("d", d + " L" + X(xs - 1) + " " + Y(min) + " L" + X(0) + " " + Y(min) + " Z");
+  svg.appendChild(area);
+
+  var line = document.createElementNS(svgNS, "path");
+  line.setAttribute("class", "ln");
+  line.setAttribute("d", d);
+  svg.appendChild(line);
+
+  points.forEach(function(p, i){
+    var c = document.createElementNS(svgNS, "circle");
+    c.setAttribute("class", "dot");
+    c.setAttribute("cx", X(i)); c.setAttribute("cy", Y(p.v)); c.setAttribute("r", 3);
+    svg.appendChild(c);
+
+    var hit = document.createElementNS(svgNS, "rect");   // цель наведения крупнее точки
+    hit.setAttribute("class", "hit");
+    hit.setAttribute("x", X(i) - 9); hit.setAttribute("y", 0);
+    hit.setAttribute("width", 18); hit.setAttribute("height", H);
+    hit.addEventListener("mousemove", function(e){ showTip(e, p.label + " — " + fmt(p.v)); });
+    hit.addEventListener("mouseleave", hideTip);
+    svg.appendChild(hit);
   });
-  Array.prototype.forEach.call(document.getElementById("ue-channels").children, function(b){
-    b.setAttribute("aria-pressed", String(b.dataset.k === ueCurChannel));
+
+  // подписи только по краям — иначе они налезают друг на друга
+  [0, xs - 1].forEach(function(i, k){
+    if (xs < 2 && k) return;
+    var t = document.createElementNS(svgNS, "text");
+    t.setAttribute("class", "xl");
+    t.setAttribute("x", X(i)); t.setAttribute("y", H - 4);
+    t.setAttribute("text-anchor", k ? "end" : "start");
+    t.textContent = points[i].label;
+    svg.appendChild(t);
+  });
+
+  return svg;
+}
+
+function renderUECharts(host, ue){
+  host.textContent = "";
+  UE_CHARTS.forEach(function(spec){
+    var idx = colIndex(spec.col), fmt = FMT[spec.fmt];
+    var points = ue.rows.filter(function(r){ return r.kind === "month"; })
+      .map(function(r){
+        return { label: r.label.slice(0, 3) + " " + String(r.year || "").slice(2),
+                 v: toNum(r.cells[idx]) };
+      })
+      .filter(function(p){ return p.v != null; });
+
+    var box = document.createElement("div");
+    box.className = "chart";
+    var h = document.createElement("h3");
+    h.textContent = spec.title;
+    box.appendChild(h);
+
+    if (!points.length){
+      var s = document.createElement("div");
+      s.className = "status";
+      s.textContent = "нет данных";
+      box.appendChild(s);
+      host.appendChild(box);
+      return;
+    }
+
+    var last = points[points.length - 1];
+    var lv = document.createElement("div");
+    lv.className = "last";
+    lv.textContent = fmt(last.v);
+    box.appendChild(lv);
+    var lc = document.createElement("div");
+    lc.className = "lastcap";
+    lc.textContent = last.label + " · последний месяц";
+    box.appendChild(lc);
+
+    box.appendChild(lineChart(points, fmt));
+    host.appendChild(box);
   });
 }
 
-function ueBuildControls(){
-  var seen = {};
-  UE.forEach(function(r){ seen[periodKey(r)] = true; });
-  uePeriods = Object.keys(seen).sort(function(a, b){
-    var x = a.split("-"), y = b.split("-");
-    return (+x[0] - +y[0]) || (+x[1] - +y[1]);
-  });
-  ueCurPeriod = uePeriods[uePeriods.length - 1];
-
-  var mh = document.getElementById("ue-months");
-  mh.textContent = "";
-  uePeriods.forEach(function(k){
-    var b = document.createElement("button");
-    b.type = "button"; b.dataset.k = k;
-    b.textContent = periodLabel(k);
-    b.addEventListener("click", function(){ ueCurPeriod = k; ueRender(); });
-    mh.appendChild(b);
-  });
-
-  var seenCh = {};
-  UE.forEach(function(r){ seenCh[r.channel] = true; });
-  ueChannels = Object.keys(seenCh);
-
-  var ct = document.getElementById("ue-channels");
-  ct.textContent = "";
-  ["__all__"].concat(ueChannels).forEach(function(c){
-    var b = document.createElement("button");
-    b.type = "button"; b.dataset.k = c;
-    b.textContent = c === "__all__" ? "Все направления" : c;
-    b.addEventListener("click", function(){
-      ueCurChannel = c;
-      // в выбранном месяце может не быть этого направления — берём его последний
-      var av = UE.filter(function(r){ return c === "__all__" || r.channel === c; })
-                 .map(periodKey);
-      if (av.indexOf(ueCurPeriod) < 0 && av.length) {
-        ueCurPeriod = uePeriods.filter(function(k){ return av.indexOf(k) >= 0; }).pop();
-      }
-      ueRender();
-    });
-    ct.appendChild(b);
-  });
-}
-
-function loadUE(){
-  UE_SHEETS.reduce(function(chain, s){
-    return chain.then(function(){
-      return gviz(s.gid).then(function(grid){ parseUE(s.name, grid); })
-                        .catch(function(e){ console.warn(s.name, e.message); });
-    });
-  }, Promise.resolve()).then(function(){
-    if (!UE.length) throw new Error("не найдено ни одной помесячной строки");
-    ueBuildControls();
-    ueRender();
+function loadUE(cfg){
+  return gviz(cfg.gid).then(function(grid){
+    var ue = parseUE(grid);
+    if (!ue.headers) throw new Error("не нашлась строка заголовков «Месяц | Затраты …»");
+    if (!ue.rows.length) throw new Error("не найдено ни одной помесячной строки");
+    renderUETable(document.getElementById(cfg.table), ue);
+    renderUECharts(document.getElementById(cfg.charts), ue);
+    document.getElementById(cfg.status).remove();
   }).catch(function(e){
-    var host = document.getElementById("ue-rows");
-    host.innerHTML = '<div class="status err"></div>';
-    host.firstChild.textContent =
-      "Не удалось собрать юнит-экономику: " + e.message +
-      ". Проверьте доступ к таблице по ссылке и номера вкладок в блоке НАСТРОЙКА.";
+    var st = document.getElementById(cfg.status);
+    st.className = "status err";
+    st.textContent = "Не удалось прочитать вкладку gid=" + cfg.gid + ": " + e.message +
+      ". Проверьте доступ к таблице по ссылке и номер вкладки в блоке НАСТРОЙКА.";
   });
 }
 
-PANELS.reduce(function(chain, cfg){
-  return chain.then(function(){ return buildPanel(cfg); });
-}, Promise.resolve()).then(loadUE);
+/* Google отбивает пачку одновременных запросов — читаем по очереди. */
+PANELS.map(function(cfg){ return function(){ return buildPanel(cfg); }; })
+  .concat(UE_SHEETS.map(function(cfg){ return function(){ return loadUE(cfg); }; }))
+  .reduce(function(chain, step){ return chain.then(step); }, Promise.resolve());
 </script>
 </body>
 </html>
