@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Отчёт MSG</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  /* Блок настройки (id таблицы, список вкладок) — в самом низу файла. */
+
+  :root{
+    --ground:#f4f5f7; --surface:#fff; --line:#dfe3e8;
+    --ink:#161a1f; --muted:#5d6874; --faint:#8b95a1;
+    --accent:#2a6fd6; --accent-soft:#e1ecfb; --accent-2:#c7dcf6;
+    --warn:#b8571f; --good:#1b7a4b; --bad:#c0392b;
+    --serif:"Source Serif 4",Georgia,serif;
+    --sans:"IBM Plex Sans",system-ui,-apple-system,sans-serif;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --ground:#14181d; --surface:#1b2027; --line:#2b323b;
+      --ink:#eef1f5; --muted:#9ba6b3; --faint:#78838f;
+      --accent:#5a9bf0; --accent-soft:#1e2b3c; --accent-2:#2c405a;
+      --warn:#e08a4e; --good:#4cb583; --bad:#e8705f;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --ground:#14181d; --surface:#1b2027; --line:#2b323b;
+    --ink:#eef1f5; --muted:#9ba6b3; --faint:#78838f;
+    --accent:#5a9bf0; --accent-soft:#1e2b3c; --accent-2:#2c405a;
+    --warn:#e08a4e; --good:#4cb583; --bad:#e8705f;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;}
+  img{max-width:100%;}
+  .wrap{max-width:900px;margin:0 auto;padding-inline:16px;padding-block:40px 56px;display:flex;flex-direction:column;gap:32px;}
+
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:600;}
+  h1{font-family:var(--serif);font-size:clamp(28px,5vw,40px);font-weight:600;line-height:1.15;margin:6px 0 8px;text-wrap:balance;letter-spacing:-.01em;}
+  .sub{color:var(--muted);max-width:62ch;margin:0;}
+  .sectiontitle{font-family:var(--serif);font-size:24px;font-weight:600;margin:8px 0 -14px;}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .kpi{background:var(--surface);padding:16px 18px;}
+  .kpi b{display:block;font-family:var(--serif);font-size:28px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums;}
+  .kpi span{display:block;font-size:12.5px;color:var(--muted);margin-top:4px;}
+  .kpi b.pos{color:var(--good);} .kpi b.neg{color:var(--bad);}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 20px 14px;}
+  .panelhead{display:flex;flex-wrap:wrap;gap:12px;align-items:baseline;justify-content:space-between;margin-bottom:18px;}
+  .panelhead h2{font-family:var(--serif);font-size:19px;font-weight:600;margin:0;}
+  .n{font-size:12.5px;color:var(--faint);font-variant-numeric:tabular-nums;}
+
+  .controls{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}
+  .ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+  .ctl > .cap{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:600;min-width:74px;}
+  .seg{display:inline-flex;flex-wrap:wrap;background:var(--ground);border:1px solid var(--line);border-radius:8px;padding:2px;gap:2px;}
+  .seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--muted);padding:5px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;}
+  .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+  .rows{display:flex;flex-direction:column;gap:2px;}
+  .row{display:flex;flex-direction:column;gap:4px;padding:9px 10px;border-radius:8px;transition:background .12s;}
+  .row:hover,.row:focus-visible{background:var(--accent-soft);outline:none;}
+  .rowtop{display:flex;justify-content:space-between;gap:12px;align-items:baseline;}
+  .label{font-size:14px;}
+  .val{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .val strong{color:var(--ink);font-weight:600;}
+  .track{height:10px;background:var(--ground);border-radius:3px;overflow:hidden;display:flex;}
+  .row:hover .track{background:var(--accent-2);}
+  .bar{height:100%;background:var(--accent);border-radius:3px;transition:width .35s cubic-bezier(.2,.7,.3,1);}
+  .bar.neg{background:var(--bad);margin-left:auto;}
+  .row.zero .label,.row.zero .val{color:var(--faint);}
+
+  .status{color:var(--muted);font-size:14px;padding:8px 10px;}
+  .status.err{color:var(--warn);}
+
+  .tablewrap{overflow-x:auto;margin-top:6px;}
+  table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums;}
+  th,td{text-align:right;padding:8px 10px;border-top:1px solid var(--line);white-space:nowrap;}
+  th:first-child,td:first-child{text-align:left;}
+  thead th{border-top:0;color:var(--faint);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;}
+  td.pos{color:var(--good);} td.neg{color:var(--bad);}
+
+  .note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px;}
+  .note h3{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;}
+  .note ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;}
+  .lead{border-left:3px solid var(--warn);padding-left:14px;}
+  .lead p{margin:0;}
+  @media (prefers-reduced-motion:reduce){.bar{transition:none;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Битрикс24 · Юнит-экономика MSG</div>
+    <h1>Отчёт по лидам и экономике каналов</h1>
+    <p class="sub">Причины отказов за 01.07 — 31.08.2026 и помесячная юнит-экономика направлений. Все цифры подтягиваются из Google Таблицы при каждом открытии страницы.</p>
+  </header>
+
+  <div class="sectiontitle">Причины отказов</div>
+
+  <div class="kpis">
+    <div class="kpi"><b>315</b><span>сделок за период</span></div>
+    <div class="kpi"><b>60,3%</b><span>доля отказов</span></div>
+    <div class="kpi"><b>85,1%</b><span>потока — Авито</span></div>
+    <div class="kpi"><b>3,5%</b><span>успешных сделок</span></div>
+  </div>
+
+  <section class="panel">
+    <div class="panelhead">
+      <h2>Причины отказов</h2>
+      <div class="seg" id="seg-1" role="group" aria-label="Источник лида"></div>
+      <div class="n" id="total-1"></div>
+    </div>
+    <div class="rows" id="rows-1"><div class="status">Загружаем данные из таблицы…</div></div>
+  </section>
+
+  <div class="lead">
+    <p><strong>Почти две трети отказов — это не отказ, а потеря контакта.</strong> «Нет обратной связи» — 118 сделок. Цена («нашли дешевле») объясняет лишь 10%, сроки — 5%. Проблема не в прайсе, а в том, что диалог обрывается.</p>
+  </div>
+
+  <section class="panel">
+    <div class="panelhead">
+      <h2>Сделки по источникам</h2>
+      <div class="seg" id="seg-2" role="group" aria-label="Стадия сделки"></div>
+      <div class="n" id="total-2"></div>
+    </div>
+    <div class="rows" id="rows-2"><div class="status">Загружаем данные из таблицы…</div></div>
+  </section>
+
+  <div class="sectiontitle">Юнит-экономика по месяцам</div>
+
+  <div class="kpis" id="ue-kpis">
+    <div class="kpi"><b>—</b><span>затраты на продвижение</span></div>
+    <div class="kpi"><b>—</b><span>лиды</span></div>
+    <div class="kpi"><b>—</b><span>сделки</span></div>
+    <div class="kpi"><b>—</b><span>выручка</span></div>
+  </div>
+
+  <section class="panel">
+    <div class="panelhead">
+      <h2>Сравнение направлений</h2>
+      <div class="n" id="ue-caption"></div>
+    </div>
+    <div class="controls">
+      <div class="ctl"><span class="cap">Месяц</span><div class="seg" id="ue-months" role="group" aria-label="Месяц"></div></div>
+      <div class="ctl"><span class="cap">Показатель</span><div class="seg" id="ue-metrics" role="group" aria-label="Показатель"></div></div>
+    </div>
+    <div class="rows" id="ue-rows"><div class="status">Загружаем юнит-экономику…</div></div>
+    <div class="tablewrap"><table id="ue-table"></table></div>
+  </section>
+
+  <div class="note">
+    <h3>Как считается юнит-экономика</h3>
+    <ul>
+      <li>Валовая прибыль = выручка × рентабельность направления за этот месяц (она задана в таблице и отличается по направлениям: 5–12%).</li>
+      <li>ROI = (валовая прибыль − затраты на продвижение) ÷ затраты. Отрицательный ROI означает, что канал за месяц не окупил рекламу.</li>
+      <li>Стоимость лида и сделки пересчитываются от затрат и факта месяца, а не берутся из таблицы — так не возникает ошибок деления на ноль.</li>
+      <li>Месяцы без сделок дают пустые ячейки в стоимости сделки и среднем чеке — это не ошибка, а отсутствие продаж.</li>
+      <li>Постоянные расходы (зарплаты, аренда, техника) сюда не входят. Это экономика маркетинга, а не P&amp;L компании.</li>
+    </ul>
+  </div>
+
+  <div class="note">
+    <h3>Оговорки к причинам отказов</h3>
+    <ul>
+      <li>Авито даёт 85% потока и 95% отказов — сравнивать структуру причин между каналами статистически некорректно, у «прочих» всего 9 отказов.</li>
+      <li>Формулировка «Нет обратной связи» не различает, кто прервал коммуникацию — клиент или менеджер.</li>
+      <li>24 сделки в стадии «Спам» в расчёт причин не включены; у 1 отказной сделки причина не заполнена.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+/* ═══ НАСТРОЙКА ══════════════════════════════════════════════════════
+   SHEET_ID — id из адреса таблицы:
+              docs.google.com/spreadsheets/d/ЭТОТ_КУСОК/edit
+   PANELS   — простые вкладки «подпись + числовые столбцы»
+   UE_SHEETS — вкладки с юнит-экономикой (помесячные таблицы)
+   Таблица должна быть открыта по ссылке: Настройки доступа →
+   «Все, у кого есть ссылка» → Читатель.
+   ═════════════════════════════════════════════════════════════════ */
+var SHEET_ID = "1aJDjx6BNLMPFvP5IJg-1PEZixsugIyjItDz3cWABQC4";
+
+var PANELS = [
+  { sheet: "Причины",   suffix: "1", allLabel: "Все источники" },
+  { sheet: "Источники", suffix: "2", allLabel: "" }
+];
+
+var UE_SHEETS = [
+  "Юнит-экономика Бетон",
+  "Юнит-экономика Инертные материалы",
+  "Юнит-экономика ЖБИ"
+];
+
+/* ── общие утилиты ───────────────────────────────────────────────── */
+var MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь",
+              "Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+
+function nf1(x){ return x.toFixed(1).replace(".", ","); }
+function money(x){
+  if (x == null || !isFinite(x)) return "—";
+  return Math.round(x).toLocaleString("ru-RU") + " ₽";
+}
+function count(x){
+  if (x == null || !isFinite(x)) return "—";
+  return Math.round(x).toLocaleString("ru-RU");
+}
+function pct(x){
+  if (x == null || !isFinite(x)) return "—";
+  return (x > 0 ? "+" : "") + nf1(x) + "%";
+}
+
+/* Google отбивает пачку одновременных запросов -> "Failed to fetch".
+   Поэтому запросы идут по очереди, с одной повторной попыткой. */
+function gviz(sheet, retry){
+  return gvizOnce(sheet).catch(function(e){
+    if (retry) throw e;
+    return new Promise(function(res){ setTimeout(res, 800); }).then(function(){
+      return gviz(sheet, true);
+    });
+  });
+}
+
+function gvizOnce(sheet){
+  return fetch("https://docs.google.com/spreadsheets/d/" + SHEET_ID +
+        "/gviz/tq?tqx=out:json&sheet=" + encodeURIComponent(sheet) +
+        "&headers=1&_=" + Date.now())
+    .then(function(r){
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.text();
+    })
+    .then(function(txt){
+      var m = txt.match(/setResponse\(([\s\S]*)\);?\s*$/);
+      if (!m) throw new Error("неожиданный ответ таблицы");
+      return JSON.parse(m[1]).table;
+    });
+}
+
+/* ── панели «подпись + ряды» (причины, источники) ────────────────── */
+function buildPanel(cfg){
+  var rowsEl  = document.getElementById("rows-"  + cfg.suffix),
+      totalEl = document.getElementById("total-" + cfg.suffix),
+      segEl   = document.getElementById("seg-"   + cfg.suffix);
+  var COLS = [], DATA = [];
+
+  function valueOf(d, src){
+    return src === "__all__"
+      ? d.values.reduce(function(a, b){ return a + b; }, 0)
+      : d.values[COLS.indexOf(src)];
+  }
+
+  function render(src){
+    var vals = DATA.map(function(d){ return { name: d.name, v: valueOf(d, src) }; })
+                   .sort(function(a, b){ return b.v - a.v; });
+    var sum = vals.reduce(function(s, d){ return s + d.v; }, 0);
+    var max = Math.max.apply(null, vals.map(function(d){ return d.v; })) || 1;
+    totalEl.textContent = "n = " + sum + " · " +
+      (src === "__all__" ? cfg.allLabel.toLowerCase() : src);
+
+    rowsEl.textContent = "";
+    vals.forEach(function(d){
+      var share = sum ? d.v / sum * 100 : 0;
+      var row = document.createElement("div");
+      row.className = "row" + (d.v === 0 ? " zero" : "");
+      row.tabIndex = 0;
+      row.title = d.name + " — " + d.v + " из " + sum + " (" + nf1(share) + "%)";
+      row.innerHTML = '<div class="rowtop"><span class="label"></span>' +
+        '<span class="val"><strong>' + d.v + '</strong> · ' + nf1(share) + '%</span></div>' +
+        '<div class="track"><div class="bar"></div></div>';
+      row.querySelector(".label").textContent = d.name;
+      row.querySelector(".bar").style.width = (d.v / max * 100) + "%";
+      rowsEl.appendChild(row);
+    });
+
+    Array.prototype.forEach.call(segEl.children, function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.src === src));
+    });
+  }
+
+  function buildFilter(){
+    var keys = cfg.allLabel ? ["__all__"].concat(COLS) : COLS.slice();
+    keys.forEach(function(c){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.dataset.src = c;
+      b.textContent = c === "__all__" ? cfg.allLabel : c;
+      b.addEventListener("click", function(){ render(c); });
+      segEl.appendChild(b);
+    });
+    return keys[0];
+  }
+
+  return gviz(cfg.sheet).then(function(t){
+    COLS = t.cols.slice(1).map(function(c, i){
+      return (c.label || "").trim() || ("Ряд " + (i + 1));
+    });
+    DATA = t.rows.map(function(r){
+      var cells = r.c || [];
+      return {
+        name: cells[0] && cells[0].v != null ? String(cells[0].v) : "",
+        values: COLS.map(function(_, i){
+          var c = cells[i + 1];
+          return c && typeof c.v === "number" ? c.v : 0;
+        })
+      };
+    }).filter(function(d){ return d.name; });
+
+    if (!DATA.length) throw new Error("в листе нет строк с данными");
+    render(buildFilter());
+  }).catch(function(e){
+    rowsEl.innerHTML = '<div class="status err"></div>';
+    rowsEl.firstChild.textContent =
+      "Не удалось прочитать лист «" + cfg.sheet + "»: " + e.message +
+      ". Проверьте доступ к таблице по ссылке и название листа.";
+  });
+}
+
+/* ── юнит-экономика ──────────────────────────────────────────────── */
+var UE = [];   // {channel, year, month, mi, spend, leads, deals, revenue, margin}
+
+function headerMap(cells){
+  var map = {};
+  cells.forEach(function(c, i){
+    var t = (c && c.v != null ? String(c.v) : "").trim().toLowerCase();
+    if (!t) return;
+    if (t.indexOf("затрат") === 0) map.spend = i;
+    else if (t === "лиды") map.leads = i;
+    else if (t === "сделки") map.deals = i;
+    else if (t.indexOf("выручка") === 0) map.revenue = i;
+    else if (t.indexOf("рентабель") === 0) map.margin = i;
+    else if (t.indexOf("переход") === 0) map.clicks = i;
+  });
+  return map;
+}
+
+function num(cells, i){
+  if (i == null) return null;
+  var c = cells[i];
+  return c && typeof c.v === "number" ? c.v : null;
+}
+
+function parseUE(sheetName, t){
+  var rows = t.rows || [];
+  var head = t.cols.map(function(c){ return { v: c.label }; });
+  var blocks = [];
+  var cur = null;
+  var year = null;
+  var baseName = sheetName.replace(/^Юнит-экономика\s*/i, "").trim() || sheetName;
+
+  // первая строка листа уже стала заголовком колонок — учитываем её тоже
+  var all = [{ c: head }].concat(rows);
+
+  all.forEach(function(r){
+    var cells = r.c || [];
+    var first = cells[0] && cells[0].v != null ? String(cells[0].v).trim() : "";
+
+    if (/^месяц$/i.test(first)) {                       // начало нового блока
+      var map = headerMap(cells);
+      cur = { name: baseName + (map.clicks != null ? " · Контекст" : ""), map: map };
+      if (map.clicks != null && blocks.length) cur.name = baseName + " · Контекст";
+      else if (blocks.length === 0 && /бетон/i.test(baseName)) cur.name = baseName + " · Авито";
+      blocks.push(cur);
+      return;
+    }
+    var ym = first.match(/^(20\d\d)/);                  // строка-разделитель года
+    if (ym) { year = +ym[1]; return; }
+
+    var mi = MONTHS.indexOf(first);
+    if (mi < 0 || !cur) return;
+
+    var spend = num(cells, cur.map.spend);
+    if (spend == null) return;
+    var margin = num(cells, cur.map.margin);
+    if (margin != null && margin > 1) margin = margin / 100;
+
+    UE.push({
+      channel: cur.name,
+      year: year || 2026,
+      month: first,
+      mi: mi,
+      spend: spend,
+      leads: num(cells, cur.map.leads),
+      deals: num(cells, cur.map.deals),
+      revenue: num(cells, cur.map.revenue),
+      margin: margin
+    });
+  });
+}
+
+var UE_METRICS = [
+  { key:"spend",   label:"Затраты",        fmt:money, get:function(r){ return r.spend; } },
+  { key:"leads",   label:"Лиды",           fmt:count, get:function(r){ return r.leads; } },
+  { key:"deals",   label:"Сделки",         fmt:count, get:function(r){ return r.deals; } },
+  { key:"revenue", label:"Выручка",        fmt:money, get:function(r){ return r.revenue; } },
+  { key:"profit",  label:"Валовая прибыль",fmt:money, get:function(r){
+      return r.revenue != null && r.margin != null ? r.revenue * r.margin : null; } },
+  { key:"cpl",     label:"Цена лида",      fmt:money, get:function(r){
+      return r.leads ? r.spend / r.leads : null; } },
+  { key:"cpo",     label:"Цена сделки",    fmt:money, get:function(r){
+      return r.deals ? r.spend / r.deals : null; } },
+  { key:"check",   label:"Средний чек",    fmt:money, get:function(r){
+      return r.deals ? r.revenue / r.deals : null; } },
+  { key:"roi",     label:"ROI",            fmt:pct,   get:function(r){
+      if (!r.spend || r.revenue == null || r.margin == null) return null;
+      return (r.revenue * r.margin - r.spend) / r.spend * 100; } }
+];
+
+var uePeriods = [], ueCurPeriod = null, ueCurMetric = "spend";
+
+function periodKey(r){ return r.year + "-" + r.mi; }
+function periodLabel(k){
+  var p = k.split("-");
+  return MONTHS[+p[1]].slice(0,3) + " " + String(p[0]).slice(2);
+}
+
+function ueRender(){
+  var rows = UE.filter(function(r){ return periodKey(r) === ueCurPeriod; });
+  var metric = UE_METRICS.filter(function(m){ return m.key === ueCurMetric; })[0];
+  var p = ueCurPeriod.split("-");
+  document.getElementById("ue-caption").textContent =
+    MONTHS[+p[1]] + " " + p[0] + " · " + rows.length + " направл.";
+
+  // KPI-плитки — сводно за месяц
+  var sum = function(f){
+    return rows.reduce(function(s, r){ var v = f(r); return s + (v || 0); }, 0);
+  };
+  var tiles = [
+    [money(sum(function(r){ return r.spend; })),   "затраты на продвижение"],
+    [count(sum(function(r){ return r.leads; })),   "лиды"],
+    [count(sum(function(r){ return r.deals; })),   "сделки"],
+    [money(sum(function(r){ return r.revenue; })), "выручка"]
+  ];
+  var kp = document.getElementById("ue-kpis");
+  kp.textContent = "";
+  tiles.forEach(function(t){
+    var d = document.createElement("div");
+    d.className = "kpi";
+    d.innerHTML = "<b></b><span></span>";
+    d.querySelector("b").textContent = t[0];
+    d.querySelector("span").textContent = t[1];
+    kp.appendChild(d);
+  });
+
+  // столбики по направлениям
+  var vals = rows.map(function(r){ return { name: r.channel, v: metric.get(r) }; });
+  var maxAbs = Math.max.apply(null, vals.map(function(d){
+    return d.v == null ? 0 : Math.abs(d.v); })) || 1;
+  vals.sort(function(a, b){ return (b.v || 0) - (a.v || 0); });
+
+  var host = document.getElementById("ue-rows");
+  host.textContent = "";
+  vals.forEach(function(d){
+    var row = document.createElement("div");
+    row.className = "row" + (d.v ? "" : " zero");
+    row.tabIndex = 0;
+    row.title = d.name + " — " + metric.label + ": " + metric.fmt(d.v);
+    row.innerHTML = '<div class="rowtop"><span class="label"></span>' +
+      '<span class="val"><strong></strong></span></div>' +
+      '<div class="track"><div class="bar"></div></div>';
+    row.querySelector(".label").textContent = d.name;
+    row.querySelector(".val strong").textContent = metric.fmt(d.v);
+    var bar = row.querySelector(".bar");
+    bar.style.width = (d.v == null ? 0 : Math.abs(d.v) / maxAbs * 100) + "%";
+    if (d.v != null && d.v < 0) bar.classList.add("neg");
+    host.appendChild(row);
+  });
+
+  // подробная таблица
+  var tbl = document.getElementById("ue-table");
+  tbl.textContent = "";
+  var thead = document.createElement("thead");
+  var htr = document.createElement("tr");
+  ["Направление"].concat(UE_METRICS.map(function(m){ return m.label; }))
+    .forEach(function(h){
+      var th = document.createElement("th");
+      th.textContent = h;
+      htr.appendChild(th);
+    });
+  thead.appendChild(htr);
+  tbl.appendChild(thead);
+  var tb = document.createElement("tbody");
+  rows.forEach(function(r){
+    var tr = document.createElement("tr");
+    var td0 = document.createElement("td");
+    td0.textContent = r.channel;
+    tr.appendChild(td0);
+    UE_METRICS.forEach(function(m){
+      var td = document.createElement("td");
+      var v = m.get(r);
+      td.textContent = m.fmt(v);
+      if (m.key === "roi" && v != null) td.className = v >= 0 ? "pos" : "neg";
+      tr.appendChild(td);
+    });
+    tb.appendChild(tr);
+  });
+  tbl.appendChild(tb);
+
+  Array.prototype.forEach.call(document.getElementById("ue-months").children, function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.k === ueCurPeriod));
+  });
+  Array.prototype.forEach.call(document.getElementById("ue-metrics").children, function(b){
+    b.setAttribute("aria-pressed", String(b.dataset.k === ueCurMetric));
+  });
+}
+
+function ueBuildControls(){
+  var seen = {};
+  UE.forEach(function(r){ seen[periodKey(r)] = true; });
+  uePeriods = Object.keys(seen).sort(function(a, b){
+    var x = a.split("-"), y = b.split("-");
+    return (+x[0] - +y[0]) || (+x[1] - +y[1]);
+  });
+  ueCurPeriod = uePeriods[uePeriods.length - 1];
+
+  var mh = document.getElementById("ue-months");
+  mh.textContent = "";
+  uePeriods.forEach(function(k){
+    var b = document.createElement("button");
+    b.type = "button"; b.dataset.k = k;
+    b.textContent = periodLabel(k);
+    b.addEventListener("click", function(){ ueCurPeriod = k; ueRender(); });
+    mh.appendChild(b);
+  });
+
+  var mt = document.getElementById("ue-metrics");
+  mt.textContent = "";
+  UE_METRICS.forEach(function(m){
+    var b = document.createElement("button");
+    b.type = "button"; b.dataset.k = m.key;
+    b.textContent = m.label;
+    b.addEventListener("click", function(){ ueCurMetric = m.key; ueRender(); });
+    mt.appendChild(b);
+  });
+}
+
+function loadUE(){
+  UE_SHEETS.reduce(function(chain, s){
+    return chain.then(function(){
+      return gviz(s).then(function(t){ parseUE(s, t); })
+                    .catch(function(e){ console.warn(s, e.message); });
+    });
+  }, Promise.resolve()).then(function(){
+    if (!UE.length) throw new Error("не найдено ни одной помесячной строки");
+    ueBuildControls();
+    ueRender();
+  }).catch(function(e){
+    var host = document.getElementById("ue-rows");
+    host.innerHTML = '<div class="status err"></div>';
+    host.firstChild.textContent =
+      "Не удалось собрать юнит-экономику: " + e.message +
+      ". Проверьте доступ к таблице по ссылке и названия вкладок в блоке НАСТРОЙКА.";
+  });
+}
+
+PANELS.reduce(function(chain, cfg){
+  return chain.then(function(){ return buildPanel(cfg); });
+}, Promise.resolve()).then(loadUE);
+</script>
+</body>
+</html>
